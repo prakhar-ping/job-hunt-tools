@@ -30,7 +30,13 @@ def resume_to_text(d: dict) -> str:
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "shared" / "config.yaml"
 RESUME = ROOT / "shared" / "resume.md"
+RESUME_EXAMPLE = ROOT / "shared" / "resume.example.md"
 OUT_DIR = ROOT / "tailored"
+
+
+def read_resume() -> str:
+    """The user's resume.md (gitignored) if present, else the bundled template."""
+    return (RESUME if RESUME.exists() else RESUME_EXAMPLE).read_text()
 
 SYSTEM = """You are a precise resume-tailoring tool. You output ONLY the three \
 requested markdown sections. No greetings, no interview tips, no closing remarks. \
@@ -64,6 +70,8 @@ Do not invent anything — only reframe real resume content."""
 
 
 def is_resume_filled(text: str) -> bool:
+    if "you@example.com" in text or "Your Name — Master Resume" in text:
+        return False  # the bundled template, not a real resume
     stripped = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
     return stripped.count("TODO") <= 2 and len(stripped.strip()) > 200
 
@@ -142,7 +150,7 @@ def tailor_resume_structured(source: str) -> tuple[dict, str, dict]:
     back to the untailored resume. ats_report = score of the result vs JD keywords."""
     config = yaml.safe_load(CONFIG.read_text())
     llm = config["llm"]
-    resume = RESUME.read_text()
+    resume = read_resume()
     if not is_resume_filled(resume):
         raise ValueError("shared/resume.md is still the template — fill it first.")
     baseline = parse_resume_md(resume)
@@ -168,7 +176,7 @@ def tailor_resume_structured(source: str) -> tuple[dict, str, dict]:
 def tailor_resume(source: str) -> tuple[str, str]:
     """Generate a full tailored resume (markdown) for a JD. Returns (md, company)."""
     config = yaml.safe_load(CONFIG.read_text())
-    resume = RESUME.read_text()
+    resume = read_resume()
     if not is_resume_filled(resume):
         raise ValueError("shared/resume.md is still the template — fill it first.")
     jd, company = fetch_jd(source)
@@ -182,7 +190,7 @@ def tailor_resume(source: str) -> tuple[str, str]:
 def run(source: str) -> str:
     load_env()
     config = yaml.safe_load(CONFIG.read_text())
-    resume = RESUME.read_text()
+    resume = read_resume()
     if not is_resume_filled(resume):
         return ("shared/resume.md is still the template — fill it with your real "
                 "experience first, then re-run.")

@@ -32,7 +32,9 @@ Fill `.env`:
 - `GMAIL_USER` / `GMAIL_APP_PASSWORD` — Google Account → Security → 2-Step
   Verification → App passwords (monitor email digest; optional)
 
-Fill `shared/resume.md` with your real experience (replace the template).
+Create your resume: `cp shared/resume.example.md shared/resume.md` and fill it
+with your real experience. `shared/resume.md` is gitignored, so your resume and
+contact details stay local and never get committed.
 
 ### LLM provider (tailor / referral / resume keywords)
 Set in `config.yaml` under `llm:`. Two providers:

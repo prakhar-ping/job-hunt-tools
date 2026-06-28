@@ -16,3 +16,4 @@ dist/
 .pytest_cache/
 shared/resume_profile.json
 shared/uploads/
+shared/resume.md
