@@ -183,7 +183,9 @@ def send_email(config: dict, report: str) -> None:
     print("[email] sent.", file=sys.stderr)
 
 
-def run(dry_run: bool = False) -> str:
+def run(dry_run: bool = False, deliver: bool = True) -> str:
+    """deliver=False refreshes snapshots + archive but sends no email/notif
+    (used by the web dashboard's Refresh button)."""
     load_env()
     config = load_config()
     match_cfg = config["match"]
@@ -231,7 +233,7 @@ def run(dry_run: bool = False) -> str:
     else:
         out = ROOT / f"new_jobs_{dt.date.today().isoformat()}.md"
         out.write_text(report)
-        if total:
+        if total and deliver:
             notify_macos(f"{total} new matching job(s)")
             send_email(config, report)
     return report

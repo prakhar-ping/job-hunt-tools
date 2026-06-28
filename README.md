@@ -85,6 +85,16 @@ Parses contacts, keeps engineering titles at the target company, drafts a
 personalized message each. Drafting only — no LinkedIn calls, no sending.
 Saves `referral_drafts/<company>-<date>.md`.
 
+## Web dashboard (localhost)
+
+```bash
+./.venv/bin/python -m web      # then open http://127.0.0.1:5000
+```
+One page: all current matched jobs grouped by source (companies + Web (Adzuna)),
+clickable links, a live filter box, and a **Refresh** button that re-runs the
+scrape (updates snapshots, no email). Reads the same snapshot data the monitor
+writes. Bound to localhost only.
+
 ## Tests
 
 ```bash
