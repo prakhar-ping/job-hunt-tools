@@ -16,6 +16,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "anthropic>=0.40",
     "flask>=3.0",
+    "pypdf>=4.0",
 ]
 
 [project.optional-dependencies]

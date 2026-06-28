@@ -10,11 +10,21 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+from pathlib import Path
 
-from flask import Flask, redirect, render_template_string, url_for
+from flask import Flask, redirect, render_template_string, request, url_for
 
-from monitor.monitor import SNAP_DIR
+from monitor.monitor import SNAP_DIR, load_config
 from monitor.monitor import run as run_monitor
+from shared.profile import (
+    clear_profile,
+    derive_profile,
+    extract_resume_text,
+    load_profile,
+    save_profile,
+)
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "shared" / "uploads"
 
 app = Flask(__name__)
 
@@ -71,6 +81,25 @@ TEMPLATE = """
     <button>↻ Refresh</button>
   </form>
 </header>
+<div style="padding:10px 24px;background:#12151c;border-bottom:1px solid #2a2e37;
+            display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+  {% if profile %}
+    <span class="src">▣ Resume:
+      <b>{{ profile.resume_name or 'uploaded' }}</b></span>
+    <span class="muted">queries: {{ profile.queries|join(', ') }}</span>
+    <form method="post" action="{{ url_for('clear_resume') }}" style="margin:0">
+      <button style="background:#444">Use config instead</button>
+    </form>
+  {% else %}
+    <span class="muted">▣ Using <b>config.yaml</b>.
+      Upload a resume to tailor the search:</span>
+    <form method="post" action="{{ url_for('upload_resume') }}"
+          enctype="multipart/form-data" style="margin:0;display:flex;gap:8px">
+      <input type="file" name="resume" accept=".pdf,.md,.txt" required>
+      <button>Upload &amp; search from resume</button>
+    </form>
+  {% endif %}
+</div>
 <main id="list">
 {% for source, items in jobs.items() %}
   <section data-source="{{ source }}">
@@ -110,12 +139,36 @@ def index():
     jobs = load_jobs()
     total = sum(len(v) for v in jobs.values())
     return render_template_string(TEMPLATE, jobs=jobs, total=total,
+                                  profile=load_profile(),
                                   today=dt.date.today().isoformat())
 
 
 @app.route("/refresh", methods=["POST"])
 def refresh():
     run_monitor(dry_run=False, deliver=False)  # update snapshots, no email/notif
+    return redirect(url_for("index"))
+
+
+@app.route("/upload-resume", methods=["POST"])
+def upload_resume():
+    f = request.files.get("resume")
+    if not f or not f.filename:
+        return redirect(url_for("index"))
+    UPLOAD_DIR.mkdir(exist_ok=True)
+    dest = UPLOAD_DIR / Path(f.filename).name
+    f.save(dest)
+    text = extract_resume_text(dest)
+    model = load_config().get("model", "claude-sonnet-4-6")
+    profile = derive_profile(text, model)
+    save_profile(profile, resume_name=dest.name)
+    run_monitor(dry_run=False, deliver=False)  # re-scrape with resume keywords
+    return redirect(url_for("index"))
+
+
+@app.route("/clear-resume", methods=["POST"])
+def clear_resume():
+    clear_profile()
+    run_monitor(dry_run=False, deliver=False)  # back to config keywords
     return redirect(url_for("index"))
 
 

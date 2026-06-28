@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 
 from shared.env import is_placeholder, load_env
+from shared.profile import load_profile
 
 from .scrapers import UnsupportedCompany, fetch_adzuna, fetch_company
 
@@ -80,9 +81,11 @@ def dedup(listings: list[dict]) -> list[dict]:
     return out
 
 
-def collect_aggregator(config: dict, match_cfg: dict) -> list[dict] | None:
+def collect_aggregator(config: dict, match_cfg: dict,
+                       queries: list[str] | None = None) -> list[dict] | None:
     """Run the Adzuna aggregator if enabled and keyed. Returns matched, deduped
-    listings tagged with AGGREGATOR_NAME, or None if disabled/unconfigured."""
+    listings tagged with AGGREGATOR_NAME, or None if disabled/unconfigured.
+    `queries` overrides config queries (used by resume-derived profiles)."""
     agg = config.get("aggregator") or {}
     if not agg.get("enabled"):
         return None
@@ -93,7 +96,7 @@ def collect_aggregator(config: dict, match_cfg: dict) -> list[dict] | None:
 
     raw: list[dict] = []
     for country in agg.get("countries", ["us"]):
-        for query in agg.get("queries", []):
+        for query in (queries or agg.get("queries", [])):
             try:
                 raw += fetch_adzuna(
                     query, country, app_id, app_key,
@@ -188,7 +191,10 @@ def run(dry_run: bool = False, deliver: bool = True) -> str:
     (used by the web dashboard's Refresh button)."""
     load_env()
     config = load_config()
-    match_cfg = config["match"]
+    # A resume-derived profile (if uploaded) overrides config keywords/queries.
+    profile = load_profile()
+    match_cfg = profile["match"] if profile else config["match"]
+    agg_queries = profile.get("queries") if profile else None
     new_by_company: dict[str, list[dict]] = {}
     unsupported: list[tuple[str, str]] = []
     seeded: set[str] = set()
@@ -214,7 +220,7 @@ def run(dry_run: bool = False, deliver: bool = True) -> str:
             save_snapshot(company, matched)
 
     # Web-wide aggregator (Adzuna), treated like one more "company".
-    agg_matched = collect_aggregator(config, match_cfg)
+    agg_matched = collect_aggregator(config, match_cfg, agg_queries)
     if agg_matched is not None:
         previous = load_snapshot(AGGREGATOR_NAME)
         if previous is None:
@@ -226,6 +232,9 @@ def run(dry_run: bool = False, deliver: bool = True) -> str:
             save_snapshot(AGGREGATOR_NAME, agg_matched)
 
     report = render_report(new_by_company, unsupported, seeded)
+    src = (f"resume: {profile.get('resume_name') or 'uploaded'}"
+           if profile else "config.yaml")
+    report = report.replace("\n", f"\n_Search keywords from {src}._\n", 1)
     total = sum(len(v) for v in new_by_company.values())
 
     if dry_run:

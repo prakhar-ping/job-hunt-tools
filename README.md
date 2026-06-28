@@ -101,6 +101,14 @@ clickable links, a live filter box, and a **Refresh** button that re-runs the
 scrape (updates snapshots, no email). Reads the same snapshot data the monitor
 writes. Bound to localhost only.
 
+**Upload a resume to make the search generic.** The dashboard has a resume
+upload (PDF / md / txt). On upload, the resume is parsed into search keywords +
+web queries — with `ANTHROPIC_API_KEY` set, Claude derives them; otherwise a
+built-in heuristic scans for known tech/role terms. The monitor then searches
+from *your resume* instead of `config.yaml` (config stays as the fallback;
+"Use config instead" clears the resume). The derived profile is saved to
+`shared/resume_profile.json` (gitignored).
+
 ## Tests
 
 ```bash
