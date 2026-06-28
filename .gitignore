@@ -1,0 +1,7 @@
+.env
+snapshots/
+tailored/
+referral_drafts/
+new_jobs_*.md
+__pycache__/
+*.pyc
