@@ -13,6 +13,7 @@ import json
 import threading
 from pathlib import Path
 
+import markdown as md
 from flask import Flask, redirect, render_template_string, request, url_for
 
 from monitor.monitor import SNAP_DIR, load_config
@@ -24,6 +25,7 @@ from shared.profile import (
     load_profile,
     save_profile,
 )
+from tailor.tailor import run as tailor_run
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "shared" / "uploads"
 
@@ -93,6 +95,9 @@ TEMPLATE = """
   .loc { color: #8b93a1; font-size: 13px; }
   .src { color: #a78bfa; font-size: 12px; }
   .hidden { display: none; }
+  button.tailor { padding: 2px 8px; font-size: 12px; font-weight: 500;
+                  background: #1f2937; color: #93c5fd; }
+  button.tailor:hover { background: #374151; }
 </style></head>
 <body>
 <header>
@@ -136,6 +141,12 @@ TEMPLATE = """
         <a href="{{ j.url }}" target="_blank" rel="noopener">{{ j.title }}</a>
         {% if j.source %}<span class="src">@ {{ j.source }}</span>{% endif %}
         {% if j.location %}<span class="loc"> — {{ j.location }}</span>{% endif %}
+        <form method="post" action="{{ url_for('tailor') }}" target="_blank"
+              style="display:inline;margin-left:8px">
+          <input type="hidden" name="url" value="{{ j.url }}">
+          <input type="hidden" name="title" value="{{ j.title }}">
+          <button class="tailor">✎ Tailor</button>
+        </form>
       </div>
     {% endfor %}
   </section>
@@ -169,6 +180,44 @@ def index():
                                   profile=load_profile(),
                                   refreshing=_refresh["running"],
                                   today=dt.date.today().isoformat())
+
+
+RESULT_TEMPLATE = """
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tailored — {{ title }}</title>
+<style>
+  body { font: 16px/1.6 -apple-system, system-ui, sans-serif;
+         background: #0f1115; color: #e6e6e6; max-width: 820px;
+         margin: 0 auto; padding: 24px; }
+  a { color: #7dd3fc; }
+  h1 { font-size: 20px; } h2 { font-size: 16px; border-bottom: 1px solid #2a2e37;
+       padding-bottom: 4px; margin-top: 28px; }
+  code, pre { background: #171a21; border-radius: 6px; padding: 1px 5px; }
+  .back { color: #93c5fd; text-decoration: none; }
+</style></head>
+<body>
+  <a class="back" href="{{ url_for('index') }}">← back to jobs</a>
+  <h1>Tailored resume — {{ title }}</h1>
+  {{ body|safe }}
+</body></html>
+"""
+
+
+@app.route("/tailor", methods=["POST"])
+def tailor():
+    """Tailor the master resume to one job's JD. Needs ANTHROPIC_API_KEY."""
+    url = request.form.get("url", "")
+    title = request.form.get("title", "job")
+    if not url:
+        return redirect(url_for("index"))
+    try:
+        result = tailor_run(url)
+    except Exception as e:  # missing key, fetch failure, etc.
+        result = (f"**Could not tailor.** {e}\n\n"
+                  "If this is about the API key, add `ANTHROPIC_API_KEY` to "
+                  "`.env` (console.anthropic.com) and try again.")
+    body = md.markdown(result, extensions=["fenced_code", "tables"])
+    return render_template_string(RESULT_TEMPLATE, title=title, body=body)
 
 
 @app.route("/refresh", methods=["POST"])

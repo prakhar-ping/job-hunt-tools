@@ -101,6 +101,11 @@ clickable links, a live filter box, and a **Refresh** button that re-runs the
 scrape (updates snapshots, no email). Reads the same snapshot data the monitor
 writes. Bound to localhost only.
 
+**Tailor a resume to any job from the dashboard.** Every job row has a
+**✎ Tailor** button — it fetches that posting's JD, diffs it against
+`shared/resume.md`, and opens a page with keyword coverage, gaps, and concrete
+BEFORE/AFTER bullet rewrites for that specific role (needs `ANTHROPIC_API_KEY`).
+
 **Upload a resume to make the search generic.** The dashboard has a resume
 upload (PDF / md / txt). On upload, the resume is parsed into search keywords +
 web queries — with `ANTHROPIC_API_KEY` set, Claude derives them; otherwise a
