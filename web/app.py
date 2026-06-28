@@ -39,26 +39,33 @@ UPLOAD_DIR = Path(__file__).resolve().parent.parent / "shared" / "uploads"
 
 app = Flask(__name__)
 
-# Background scrape state — the scrape is slow (network), so it runs off the
-# request thread and the page polls until it finishes.
+# Background work state — slow steps (LLM keyword derivation, the network
+# scrape) run off the request thread; the page polls until they finish.
 _refresh = {"running": False}
 _refresh_lock = threading.Lock()
 
 
-def trigger_refresh() -> None:
-    """Start a background scrape if one isn't already running."""
+def _start_background(work) -> bool:
+    """Run work() in a daemon thread if nothing is already running.
+    Returns False if busy (the caller's work is skipped)."""
     with _refresh_lock:
         if _refresh["running"]:
-            return
+            return False
         _refresh["running"] = True
 
-    def _work():
+    def _run():
         try:
-            run_monitor(dry_run=False, deliver=False)
+            work()
         finally:
             _refresh["running"] = False
 
-    threading.Thread(target=_work, daemon=True).start()
+    threading.Thread(target=_run, daemon=True).start()
+    return True
+
+
+def trigger_refresh() -> None:
+    """Scrape in the background (Refresh button / clearing the resume)."""
+    _start_background(lambda: run_monitor(dry_run=False, deliver=False))
 
 
 def load_jobs() -> dict[str, list[dict]]:
@@ -119,8 +126,8 @@ TEMPLATE = """
 </header>
 {% if refreshing %}
 <div style="padding:8px 24px;background:#1e2a16;border-bottom:1px solid #2a2e37;
-            color:#a7f3a0">⟳ Refreshing jobs in the background… this page updates
-   automatically.</div>
+            color:#a7f3a0">⟳ Working in the background (reading resume / refreshing
+   jobs)… this page updates automatically.</div>
 {% endif %}
 <div style="padding:10px 24px;background:#12151c;border-bottom:1px solid #2a2e37;
             display:flex;gap:14px;align-items:center;flex-wrap:wrap">
@@ -292,11 +299,16 @@ def upload_resume():
         return redirect(url_for("index"))
     UPLOAD_DIR.mkdir(exist_ok=True)
     dest = UPLOAD_DIR / Path(f.filename).name
-    f.save(dest)
-    text = extract_resume_text(dest)
-    profile = derive_profile(text, load_config()["llm"])
-    save_profile(profile, resume_name=dest.name)
-    trigger_refresh()                       # re-scrape with resume keywords
+    f.save(dest)                              # fast: just write the file
+    text = extract_resume_text(dest)         # fast: ~0.1s
+    llm = load_config()["llm"]
+    name = dest.name
+
+    def work():                              # slow: LLM derivation + scrape
+        save_profile(derive_profile(text, llm), resume_name=name)
+        run_monitor(dry_run=False, deliver=False)
+
+    _start_background(work)                   # returns immediately
     return redirect(url_for("index"))
 
 
