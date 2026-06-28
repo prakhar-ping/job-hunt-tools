@@ -25,7 +25,7 @@ from flask import (
 
 from monitor.monitor import SNAP_DIR, load_config
 from monitor.monitor import run as run_monitor
-from shared.pdf import markdown_to_pdf
+from shared.pdf import resume_pdf
 from shared.profile import (
     clear_profile,
     derive_profile,
@@ -33,7 +33,7 @@ from shared.profile import (
     load_profile,
     save_profile,
 )
-from tailor.tailor import slugify, tailor_resume
+from tailor.tailor import slugify, tailor_resume_structured
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "shared" / "uploads"
 
@@ -219,8 +219,8 @@ def tailor():
     if not url:
         return redirect(url_for("index"))
     try:
-        resume_md, company = tailor_resume(url)
-        pdf = markdown_to_pdf(resume_md)
+        data, company = tailor_resume_structured(url)
+        pdf = resume_pdf(data)
     except Exception as e:  # LLM down, fetch failure, template resume, etc.
         body = md.markdown(
             f"**Could not generate the tailored resume.** {e}\n\n"

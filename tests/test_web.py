@@ -23,9 +23,9 @@ def test_index_renders(monkeypatch):
 
 
 def test_tailor_route_returns_pdf(monkeypatch):
-    monkeypatch.setattr(webapp, "tailor_resume",
-                        lambda url: ("# Resume\n## Skills\n- C++", "ClickHouse"))
-    monkeypatch.setattr(webapp, "markdown_to_pdf", lambda md_text: b"%PDF-1.4 fake")
+    monkeypatch.setattr(webapp, "tailor_resume_structured",
+                        lambda url: ({"name": "X"}, "ClickHouse"))
+    monkeypatch.setattr(webapp, "resume_pdf", lambda data: b"%PDF-1.4 fake")
     client = webapp.app.test_client()
     r = client.post("/tailor", data={"url": "http://x/1", "title": "C++ Dev"})
     assert r.status_code == 200
@@ -38,7 +38,7 @@ def test_tailor_route_returns_pdf(monkeypatch):
 def test_tailor_route_handles_error(monkeypatch):
     def boom(url):
         raise RuntimeError("Ollama not reachable")
-    monkeypatch.setattr(webapp, "tailor_resume", boom)
+    monkeypatch.setattr(webapp, "tailor_resume_structured", boom)
     r = webapp.app.test_client().post("/tailor", data={"url": "u", "title": "t"})
     body = r.get_data(as_text=True)
     assert r.status_code == 200 and "Could not generate" in body

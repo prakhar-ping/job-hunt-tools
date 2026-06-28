@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import re
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from shared.claude_client import complete_cfg
 from shared.env import load_env
 
 from .jd_fetch import fetch_jd
+from .resume_model import parse_resume_md
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "shared" / "config.yaml"
@@ -87,6 +89,51 @@ experience this job values
 the relevant ones
 ## Education
 Use ONLY real content from the master resume. No invented facts."""
+
+
+SYSTEM_JSON = """You tailor a resume to a job. You are given the resume as JSON and \
+a job description. Return the SAME JSON structure with text reworded to emphasize \
+what THIS job values. RULES: keep every key and the same shape; keep every job, \
+project, date, and number; do NOT invent skills, tools, or experience that are not \
+already present; you MAY reorder the skills, reword the summary, and reword bullets \
+to use the job's language. Return ONLY the JSON object, no commentary."""
+
+
+def _validated(data: object, baseline: dict) -> dict:
+    """Keep model output only where it matches the baseline's shape; else baseline."""
+    if not isinstance(data, dict):
+        return baseline
+    out = dict(baseline)
+    for key, base_val in baseline.items():
+        val = data.get(key)
+        if isinstance(val, type(base_val)) and val:
+            if isinstance(base_val, list) and not all(
+                    isinstance(a, type(base_val[0] if base_val else a)) for a in val):
+                continue
+            out[key] = val
+    return out
+
+
+def tailor_resume_structured(source: str) -> tuple[dict, str]:
+    """Tailor the resume to a JD, returning a structured dict + company.
+    The LLM only rewrites text; layout/fields stay fixed. Falls back to the
+    untailored (but correctly structured) resume if the model output is unusable."""
+    config = yaml.safe_load(CONFIG.read_text())
+    resume = RESUME.read_text()
+    if not is_resume_filled(resume):
+        raise ValueError("shared/resume.md is still the template — fill it first.")
+    baseline = parse_resume_md(resume)
+    jd, company = fetch_jd(source)
+    if not jd:
+        raise ValueError("Empty job description.")
+    user = (f"RESUME JSON:\n{json.dumps(baseline, ensure_ascii=False)}\n\n"
+            f"JOB DESCRIPTION:\n{jd[:3000]}\n\nReturn the tailored JSON now.")
+    try:
+        raw = complete_cfg(SYSTEM_JSON, user, config["llm"], max_tokens=3500)
+        data = json.loads(re.search(r"\{.*\}", raw, re.DOTALL).group(0))
+        return _validated(data, baseline), company
+    except Exception:
+        return baseline, company
 
 
 def tailor_resume(source: str) -> tuple[str, str]:
