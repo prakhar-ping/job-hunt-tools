@@ -15,7 +15,9 @@ import yaml
 
 from shared.env import is_placeholder, load_env
 
-from .scrapers import UnsupportedCompany, fetch_company
+from .scrapers import UnsupportedCompany, fetch_adzuna, fetch_company
+
+AGGREGATOR_NAME = "Web (Adzuna)"
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "shared" / "config.yaml"
@@ -64,6 +66,48 @@ def diff_new(previous: list[dict], current: list[dict]) -> list[dict]:
     return [c for c in current if (c["company"], c["id"]) not in seen]
 
 
+def dedup(listings: list[dict]) -> list[dict]:
+    """Drop duplicate postings keyed by (company, title), case-insensitive.
+    Aggregators return the same job from multiple boards."""
+    seen, out = set(), []
+    for x in listings:
+        key = (x.get("company", "").lower().strip(),
+               x.get("title", "").lower().strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(x)
+    return out
+
+
+def collect_aggregator(config: dict, match_cfg: dict) -> list[dict] | None:
+    """Run the Adzuna aggregator if enabled and keyed. Returns matched, deduped
+    listings tagged with AGGREGATOR_NAME, or None if disabled/unconfigured."""
+    agg = config.get("aggregator") or {}
+    if not agg.get("enabled"):
+        return None
+    app_id = os.environ.get("ADZUNA_APP_ID")
+    app_key = os.environ.get("ADZUNA_APP_KEY")
+    if is_placeholder(app_id) or is_placeholder(app_key):
+        return None
+
+    raw: list[dict] = []
+    for country in agg.get("countries", ["us"]):
+        for query in agg.get("queries", []):
+            try:
+                raw += fetch_adzuna(
+                    query, country, app_id, app_key,
+                    agg.get("results_per_page", 50), agg.get("max_days_old", 30))
+            except Exception as e:  # one bad query/country shouldn't kill the run
+                print(f"[adzuna] {country}/{query!r} failed: {e}", file=sys.stderr)
+
+    matched = [x for x in dedup(raw) if matches_keywords(x, match_cfg)]
+    for x in matched:                       # tag source for snapshot/report
+        x["source"] = x["company"]
+        x["company"] = AGGREGATOR_NAME
+    return matched
+
+
 def _snap_path(company: str) -> Path:
     safe = company.replace(" ", "_").replace("/", "_")
     return SNAP_DIR / f"{safe}.json"
@@ -95,7 +139,8 @@ def render_report(new_by_company, unsupported, seeded: set[str]) -> str:
         lines.append(f"## {company} ({len(jobs)})")
         for j in jobs:
             loc = f" — {j['location']}" if j["location"] else ""
-            lines.append(f"- [{j['title']}]({j['url']}){loc}")
+            src = f" @ {j['source']}" if j.get("source") else ""
+            lines.append(f"- [{j['title']}{src}]({j['url']}){loc}")
         lines.append("")
     if seeded:
         lines.append(f"\n_Baseline established for: {', '.join(sorted(seeded))}._")
@@ -165,6 +210,18 @@ def run(dry_run: bool = False) -> str:
             new_by_company[company] = diff_new(previous, matched)
         if not dry_run:
             save_snapshot(company, matched)
+
+    # Web-wide aggregator (Adzuna), treated like one more "company".
+    agg_matched = collect_aggregator(config, match_cfg)
+    if agg_matched is not None:
+        previous = load_snapshot(AGGREGATOR_NAME)
+        if previous is None:
+            new_by_company[AGGREGATOR_NAME] = []
+            seeded.add(AGGREGATOR_NAME)
+        else:
+            new_by_company[AGGREGATOR_NAME] = diff_new(previous, agg_matched)
+        if not dry_run:
+            save_snapshot(AGGREGATOR_NAME, agg_matched)
 
     report = render_report(new_by_company, unsupported, seeded)
     total = sum(len(v) for v in new_by_company.values())

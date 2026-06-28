@@ -88,6 +88,22 @@ match:
     - customer success
     - sound
 
+# Web-wide aggregator (Adzuna). Activates when ADZUNA_APP_ID + ADZUNA_APP_KEY
+# are set in .env. Results are normalized, deduped, then run through the SAME
+# match filter above, and diffed/emailed like a company called "Web (Adzuna)".
+aggregator:
+  enabled: true
+  provider: adzuna
+  countries: [in, us, gb]      # ISO codes to search (Adzuna is country-scoped)
+  queries:
+    - "C++ game developer"
+    - "gameplay programmer"
+    - "game engine C++"
+    - "engine programmer"
+    - "C++ graphics engineer"
+  results_per_page: 50
+  max_days_old: 30
+
 # ATS map. type: greenhouse | lever | unsupported
 # Greenhouse: token -> boards-api.greenhouse.io/v1/boards/<token>/jobs
 # Lever:      token -> api.lever.co/v0/postings/<token>

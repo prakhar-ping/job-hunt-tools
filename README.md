@@ -45,6 +45,20 @@ lists them with a careers link to check by hand.
 First run seeds a baseline (emails nothing). Each later run reports only listings
 new since the previous run.
 
+### Web-wide search (Adzuna)
+Beyond the fixed company list, the monitor can search the whole web via the free
+Adzuna aggregator. Sign up at developer.adzuna.com, create an app, and put the
+keys in `.env`:
+```
+ADZUNA_APP_ID=...
+ADZUNA_APP_KEY=...
+```
+It then searches the queries/countries in `config.yaml` (`aggregator:` block),
+dedupes, applies the same `match:` filter, and reports new hits under
+**"Web (Adzuna)"** with each job's real company shown. Disabled automatically
+when the keys are absent. Edit `aggregator.queries` / `aggregator.countries` to
+tune the web search.
+
 ### Daily cron (installed)
 ```
 0 9 * * *  cd <repo> && <repo>/.venv/bin/python -m monitor >> <repo>/monitor/cron.log 2>&1

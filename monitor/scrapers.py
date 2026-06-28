@@ -55,6 +55,36 @@ def fetch_lever(company: str, token: str) -> list[dict]:
     return normalize_lever(company, r.json())
 
 
+def normalize_adzuna(payload: dict) -> list[dict]:
+    """Pure transform: Adzuna search JSON -> normalized listings. No network."""
+    out = []
+    for j in payload.get("results", []):
+        out.append({
+            "company": (j.get("company") or {}).get("display_name", "").strip()
+            or "Unknown",
+            "id": str(j.get("id", "")),
+            "title": (j.get("title") or "").strip(),
+            "location": (j.get("location") or {}).get("display_name", ""),
+            "url": j.get("redirect_url", ""),
+            "description": j.get("description", "") or "",
+        })
+    return out
+
+
+def fetch_adzuna(query: str, country: str, app_id: str, app_key: str,
+                 results_per_page: int = 50, max_days_old: int = 30) -> list[dict]:
+    """One Adzuna search. country = ISO code (in, us, gb...). Network."""
+    url = f"https://api.adzuna.com/v1/api/jobs/{country}/search/1"
+    params = {
+        "app_id": app_id, "app_key": app_key, "what": query,
+        "results_per_page": results_per_page, "max_days_old": max_days_old,
+        "content-type": "application/json",
+    }
+    r = requests.get(url, params=params, headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return normalize_adzuna(r.json())
+
+
 class UnsupportedCompany(Exception):
     """Raised for companies with no supported ATS adapter."""
 

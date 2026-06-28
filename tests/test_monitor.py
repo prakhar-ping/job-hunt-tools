@@ -1,6 +1,11 @@
 """Offline tests for monitor logic — no network, no API key."""
-from monitor.monitor import diff_new, matches_keywords
-from monitor.scrapers import normalize_greenhouse, normalize_lever
+import monitor.monitor as M
+from monitor.monitor import collect_aggregator, dedup, diff_new, matches_keywords
+from monitor.scrapers import (
+    normalize_adzuna,
+    normalize_greenhouse,
+    normalize_lever,
+)
 
 MATCH = {
     "title": ["c++", "distributed", "kernel", "raft"],
@@ -72,6 +77,58 @@ def test_normalize_greenhouse():
         "location": "Remote", "url": "https://x/42",
         "description": "build a query engine",
     }]
+
+
+def test_normalize_adzuna():
+    payload = {"results": [{
+        "id": 7, "title": "Gameplay Programmer",
+        "company": {"display_name": "Indie Studio"},
+        "location": {"display_name": "Remote"},
+        "redirect_url": "https://a/7", "description": "C++ Unreal gameplay",
+    }]}
+    out = normalize_adzuna(payload)
+    assert out[0]["company"] == "Indie Studio" and out[0]["id"] == "7"
+
+
+# --- aggregator -----------------------------------------------------------
+
+def test_dedup_by_company_title():
+    rows = [
+        {"company": "X", "title": "C++ Engineer", "id": "1"},
+        {"company": "X", "title": "c++ engineer", "id": "2"},  # dup (case)
+        {"company": "Y", "title": "C++ Engineer", "id": "3"},
+    ]
+    assert len(dedup(rows)) == 2
+
+
+def test_collect_aggregator_filters_tags_and_dedups(monkeypatch):
+    fake = [
+        {"company": "Indie", "id": "1", "title": "Gameplay Programmer (C++)",
+         "location": "Remote", "url": "u1", "description": ""},
+        {"company": "Indie", "id": "1b", "title": "Gameplay Programmer (C++)",
+         "location": "Remote", "url": "u1b", "description": ""},   # dup title
+        {"company": "BankCorp", "id": "2", "title": "Sales Director",
+         "location": "NY", "url": "u2", "description": ""},          # excluded
+    ]
+    monkeypatch.setattr(M, "fetch_adzuna", lambda *a, **k: fake)
+    monkeypatch.setenv("ADZUNA_APP_ID", "realid")
+    monkeypatch.setenv("ADZUNA_APP_KEY", "realkey")
+    cfg = {
+        "aggregator": {"enabled": True, "countries": ["us"],
+                       "queries": ["c++"], "results_per_page": 5},
+    }
+    mc = {"title": ["c++", "gameplay"], "desc_strong": [], "exclude": ["sales"]}
+    out = collect_aggregator(cfg, mc)
+    assert len(out) == 1                               # dup + excluded gone
+    assert out[0]["company"] == M.AGGREGATOR_NAME      # retagged
+    assert out[0]["source"] == "Indie"                 # real company kept
+
+
+def test_collect_aggregator_skips_without_keys(monkeypatch):
+    monkeypatch.delenv("ADZUNA_APP_ID", raising=False)
+    monkeypatch.delenv("ADZUNA_APP_KEY", raising=False)
+    cfg = {"aggregator": {"enabled": True, "queries": ["x"]}}
+    assert collect_aggregator(cfg, {"title": [], "exclude": []}) is None
 
 
 def test_normalize_lever():
