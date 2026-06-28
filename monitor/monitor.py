@@ -8,6 +8,8 @@ import os
 import re
 import subprocess
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from functools import cache
 from pathlib import Path
 
@@ -94,15 +96,30 @@ def collect_aggregator(config: dict, match_cfg: dict,
     if is_placeholder(app_id) or is_placeholder(app_key):
         return None
 
-    raw: list[dict] = []
-    for country in agg.get("countries", ["us"]):
-        for query in (queries or agg.get("queries", [])):
+    rpp = agg.get("results_per_page", 50)
+    days = agg.get("max_days_old", 30)
+    tasks = [(c, q) for c in agg.get("countries", ["us"])
+             for q in (queries or agg.get("queries", []))]
+
+    def _adzuna_call(cq):
+        country, query = cq
+        for attempt in range(2):  # one retry on rate-limit
             try:
-                raw += fetch_adzuna(
-                    query, country, app_id, app_key,
-                    agg.get("results_per_page", 50), agg.get("max_days_old", 30))
-            except Exception as e:  # one bad query/country shouldn't kill the run
+                return fetch_adzuna(query, country, app_id, app_key, rpp, days)
+            except Exception as e:
+                if "429" in str(e) and attempt == 0:
+                    time.sleep(1.5)
+                    continue
                 print(f"[adzuna] {country}/{query!r} failed: {e}", file=sys.stderr)
+                return []
+        return []
+
+    # Low concurrency keeps us under Adzuna's free-tier burst limit while still
+    # being ~3x faster than fully sequential.
+    raw: list[dict] = []
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        for part in ex.map(_adzuna_call, tasks):
+            raw += part
 
     matched = [x for x in dedup(raw) if matches_keywords(x, match_cfg)]
     for x in matched:                       # tag source for snapshot/report
@@ -199,16 +216,23 @@ def run(dry_run: bool = False, deliver: bool = True) -> str:
     unsupported: list[tuple[str, str]] = []
     seeded: set[str] = set()
 
-    for company, cfg in config["companies"].items():
+    def _fetch_one(item):
+        company, cfg = item
         try:
-            listings = fetch_company(company, cfg)
+            return company, fetch_company(company, cfg), None
         except UnsupportedCompany as e:
-            unsupported.append((company, str(e) or cfg.get("careers", "")))
-            continue
+            return company, None, str(e) or cfg.get("careers", "")
         except Exception as e:
-            unsupported.append((company, f"fetch error: {e}"))
-            continue
+            return company, None, f"fetch error: {e}"
 
+    # Fetch all companies concurrently — the slow part is network I/O.
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        results = list(ex.map(_fetch_one, config["companies"].items()))
+
+    for company, listings, err in results:
+        if err is not None:
+            unsupported.append((company, err))
+            continue
         matched = [x for x in listings if matches_keywords(x, match_cfg)]
         previous = load_snapshot(company)
         if previous is None:

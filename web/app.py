@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import threading
 from pathlib import Path
 
 from flask import Flask, redirect, render_template_string, request, url_for
@@ -27,6 +28,27 @@ from shared.profile import (
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "shared" / "uploads"
 
 app = Flask(__name__)
+
+# Background scrape state — the scrape is slow (network), so it runs off the
+# request thread and the page polls until it finishes.
+_refresh = {"running": False}
+_refresh_lock = threading.Lock()
+
+
+def trigger_refresh() -> None:
+    """Start a background scrape if one isn't already running."""
+    with _refresh_lock:
+        if _refresh["running"]:
+            return
+        _refresh["running"] = True
+
+    def _work():
+        try:
+            run_monitor(dry_run=False, deliver=False)
+        finally:
+            _refresh["running"] = False
+
+    threading.Thread(target=_work, daemon=True).start()
 
 
 def load_jobs() -> dict[str, list[dict]]:
@@ -47,6 +69,7 @@ def load_jobs() -> dict[str, list[dict]]:
 TEMPLATE = """
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Job Monitor</title>
+{% if refreshing %}<meta http-equiv="refresh" content="4">{% endif %}
 <style>
   :root { color-scheme: light dark; }
   body { font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0;
@@ -78,27 +101,31 @@ TEMPLATE = """
   <input type="search" id="q" placeholder="Filter title / company / location…"
          oninput="filt()" autofocus>
   <form method="post" action="{{ url_for('refresh') }}" style="margin:0">
-    <button>↻ Refresh</button>
+    <button {% if refreshing %}disabled{% endif %}>↻ Refresh</button>
   </form>
 </header>
+{% if refreshing %}
+<div style="padding:8px 24px;background:#1e2a16;border-bottom:1px solid #2a2e37;
+            color:#a7f3a0">⟳ Refreshing jobs in the background… this page updates
+   automatically.</div>
+{% endif %}
 <div style="padding:10px 24px;background:#12151c;border-bottom:1px solid #2a2e37;
             display:flex;gap:14px;align-items:center;flex-wrap:wrap">
   {% if profile %}
-    <span class="src">▣ Resume:
+    <span class="src">▣ Searching from resume:
       <b>{{ profile.resume_name or 'uploaded' }}</b></span>
     <span class="muted">queries: {{ profile.queries|join(', ') }}</span>
     <form method="post" action="{{ url_for('clear_resume') }}" style="margin:0">
       <button style="background:#444">Use config instead</button>
     </form>
   {% else %}
-    <span class="muted">▣ Using <b>config.yaml</b>.
-      Upload a resume to tailor the search:</span>
-    <form method="post" action="{{ url_for('upload_resume') }}"
-          enctype="multipart/form-data" style="margin:0;display:flex;gap:8px">
-      <input type="file" name="resume" accept=".pdf,.md,.txt" required>
-      <button>Upload &amp; search from resume</button>
-    </form>
+    <span class="muted">▣ Searching from <b>config.yaml</b>.</span>
   {% endif %}
+  <form method="post" action="{{ url_for('upload_resume') }}"
+        enctype="multipart/form-data" style="margin:0;display:flex;gap:8px">
+    <input type="file" name="resume" accept=".pdf,.md,.txt" required>
+    <button>⬆ Upload resume{% if profile %} (replace){% endif %}</button>
+  </form>
 </div>
 <main id="list">
 {% for source, items in jobs.items() %}
@@ -140,12 +167,13 @@ def index():
     total = sum(len(v) for v in jobs.values())
     return render_template_string(TEMPLATE, jobs=jobs, total=total,
                                   profile=load_profile(),
+                                  refreshing=_refresh["running"],
                                   today=dt.date.today().isoformat())
 
 
 @app.route("/refresh", methods=["POST"])
 def refresh():
-    run_monitor(dry_run=False, deliver=False)  # update snapshots, no email/notif
+    trigger_refresh()                       # background; returns immediately
     return redirect(url_for("index"))
 
 
@@ -161,19 +189,19 @@ def upload_resume():
     model = load_config().get("model", "claude-sonnet-4-6")
     profile = derive_profile(text, model)
     save_profile(profile, resume_name=dest.name)
-    run_monitor(dry_run=False, deliver=False)  # re-scrape with resume keywords
+    trigger_refresh()                       # re-scrape with resume keywords
     return redirect(url_for("index"))
 
 
 @app.route("/clear-resume", methods=["POST"])
 def clear_resume():
     clear_profile()
-    run_monitor(dry_run=False, deliver=False)  # back to config keywords
+    trigger_refresh()                       # back to config keywords
     return redirect(url_for("index"))
 
 
 def main():
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
 
 
 if __name__ == "__main__":
