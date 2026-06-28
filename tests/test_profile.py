@@ -28,9 +28,10 @@ def test_heuristic_handles_unknown_domain():
     assert p["queries"]                              # never empty
 
 
-def test_derive_profile_falls_back_without_key(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    p = P.derive_profile(RESUME, "claude-sonnet-4-6")
+def test_derive_profile_falls_back_when_llm_unavailable():
+    # unreachable Ollama host -> llm_available False -> heuristic
+    llm = {"provider": "ollama", "model": "x", "ollama_host": "http://127.0.0.1:1"}
+    p = P.derive_profile(RESUME, llm)
     assert "match" in p and "queries" in p           # heuristic path
 
 
@@ -62,13 +63,14 @@ def test_upload_route_derives_and_saves(monkeypatch, tmp_path):
     monkeypatch.setattr(webapp, "UPLOAD_DIR", tmp_path)
     monkeypatch.setattr(webapp, "extract_resume_text", lambda p: "C++ engineer")
     monkeypatch.setattr(webapp, "derive_profile",
-                        lambda text, model: {"match": {"title": ["c++"]},
-                                             "queries": ["c++ dev"]})
+                        lambda text, llm: {"match": {"title": ["c++"]},
+                                           "queries": ["c++ dev"]})
     saved = {}
     monkeypatch.setattr(webapp, "save_profile",
                         lambda prof, resume_name="": saved.update(name=resume_name))
     monkeypatch.setattr(webapp, "run_monitor", lambda **k: "")
-    monkeypatch.setattr(webapp, "load_config", lambda: {"model": "m"})
+    monkeypatch.setattr(webapp, "load_config",
+                        lambda: {"llm": {"provider": "ollama", "model": "m"}})
     client = webapp.app.test_client()
     data = {"resume": (io.BytesIO(b"fake"), "cv.pdf")}
     r = client.post("/upload-resume", data=data, content_type="multipart/form-data")

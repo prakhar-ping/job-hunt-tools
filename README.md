@@ -34,6 +34,15 @@ Fill `.env`:
 
 Fill `shared/resume.md` with your real experience (replace the template).
 
+### LLM provider (tailor / referral / resume keywords)
+Set in `config.yaml` under `llm:`. Two providers:
+- **`ollama`** (default) — local, free, offline. Install Ollama, then
+  `ollama pull llama3.1:8b`. No API key, nothing leaves your machine.
+- **`anthropic`** — Claude API, needs `ANTHROPIC_API_KEY` in `.env` (paid).
+
+If the configured provider is unreachable, resume-keyword derivation falls back
+to a heuristic; tailor/referral report a clear error instead of crashing.
+
 Tune the job filter anytime in `shared/config.yaml` (`match:` block).
 
 ## Monitor

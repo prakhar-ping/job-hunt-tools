@@ -13,8 +13,7 @@ import json
 import re
 from pathlib import Path
 
-from .claude_client import MissingAPIKey, complete
-from .env import is_placeholder, load_env
+from .claude_client import LLMUnavailable, complete_cfg, llm_available
 
 ROOT = Path(__file__).resolve().parent.parent
 PROFILE_PATH = ROOT / "shared" / "resume_profile.json"
@@ -105,22 +104,19 @@ JSON object (no prose, no code fence) with this exact shape:
 Keep terms lowercase. Base everything on the resume's real skills and seniority."""
 
 
-def derive_profile(resume_text: str, model: str) -> dict:
-    """Claude-derived profile if a key is set, else heuristic. Always returns a
-    valid profile dict with 'match' and 'queries'."""
-    load_env()
-    import os
-    if is_placeholder(os.environ.get("ANTHROPIC_API_KEY")):
+def derive_profile(resume_text: str, llm: dict) -> dict:
+    """LLM-derived profile when the configured provider is available, else a
+    heuristic. Always returns a valid profile dict with 'match' and 'queries'."""
+    if not llm_available(llm):
         return heuristic_profile(resume_text)
     try:
-        raw = complete(_SYSTEM, resume_text[:12000], model=model, max_tokens=1500)
+        raw = complete_cfg(_SYSTEM, resume_text[:12000], llm, max_tokens=1500)
         data = json.loads(re.search(r"\{.*\}", raw, re.DOTALL).group(0))
-        # validate shape; fall back if malformed
         m = data["match"]
         assert all(k in m for k in ("title", "desc_strong", "exclude"))
         assert isinstance(data["queries"], list) and data["queries"]
         return {"match": m, "queries": data["queries"]}
-    except (MissingAPIKey, KeyError, AssertionError, AttributeError,
+    except (LLMUnavailable, KeyError, AssertionError, AttributeError,
             json.JSONDecodeError, Exception):
         return heuristic_profile(resume_text)
 

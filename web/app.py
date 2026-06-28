@@ -235,8 +235,7 @@ def upload_resume():
     dest = UPLOAD_DIR / Path(f.filename).name
     f.save(dest)
     text = extract_resume_text(dest)
-    model = load_config().get("model", "claude-sonnet-4-6")
-    profile = derive_profile(text, model)
+    profile = derive_profile(text, load_config()["llm"])
     save_profile(profile, resume_name=dest.name)
     trigger_refresh()                       # re-scrape with resume keywords
     return redirect(url_for("index"))

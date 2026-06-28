@@ -1,6 +1,11 @@
 # Job-hunt-tools config
 
-model: claude-sonnet-4-6
+# LLM for resume tailoring, referral drafts, and resume->keyword derivation.
+# provider: ollama (local, free) | anthropic (paid, needs ANTHROPIC_API_KEY)
+llm:
+  provider: ollama
+  model: llama3.1:8b
+  ollama_host: http://localhost:11434
 
 # Email delivery (filled by user in real runs; --dry-run ignores these)
 email:

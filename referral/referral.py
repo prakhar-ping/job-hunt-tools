@@ -13,7 +13,7 @@ from pathlib import Path
 
 import yaml
 
-from shared.claude_client import complete
+from shared.claude_client import complete_cfg
 from shared.env import load_env
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -103,8 +103,8 @@ def run(company: str, text: str) -> str:
         f"- {c['name'] or '(name?)'} — {c['title']} at {c['company']}"
         for c in contacts)
     user = f"# SENDER RESUME\n\n{resume}\n\n# CONTACTS\n{roster}"
-    drafts = complete(draft_system(company), user, model=config["model"],
-                      max_tokens=3000)
+    drafts = complete_cfg(draft_system(company), user, config["llm"],
+                          max_tokens=3000)
     OUT_DIR.mkdir(exist_ok=True)
     slug = re.sub(r"[^a-z0-9]+", "-", company.lower()).strip("-")
     out = OUT_DIR / f"{slug}-{dt.date.today().isoformat()}.md"

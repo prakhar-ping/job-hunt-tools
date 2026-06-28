@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from shared.claude_client import complete
+from shared.claude_client import complete_cfg
 from shared.env import load_env
 
 from .jd_fetch import fetch_jd
@@ -62,8 +62,8 @@ def run(source: str) -> str:
     jd, company = fetch_jd(source)
     if not jd:
         return "Empty job description. Paste JD text or pass a URL."
-    result = complete(SYSTEM, build_prompt(resume, jd),
-                      model=config["model"], max_tokens=3000)
+    result = complete_cfg(SYSTEM, build_prompt(resume, jd),
+                          config["llm"], max_tokens=3000)
     OUT_DIR.mkdir(exist_ok=True)
     out = OUT_DIR / f"{slugify(company)}-{dt.date.today().isoformat()}.md"
     out.write_text(result)
