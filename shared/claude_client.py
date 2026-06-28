@@ -49,7 +49,7 @@ def _complete_ollama(system: str, user: str, model: str, host: str,
                 {"role": "user", "content": user},
             ],
             "stream": False,
-            "options": {"num_predict": max_tokens},
+            "options": {"num_predict": max_tokens, "temperature": 0.3},
         },
         timeout=300,
     )

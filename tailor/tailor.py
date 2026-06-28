@@ -18,34 +18,40 @@ CONFIG = ROOT / "shared" / "config.yaml"
 RESUME = ROOT / "shared" / "resume.md"
 OUT_DIR = ROOT / "tailored"
 
-SYSTEM = """You are a resume-tailoring assistant for an experienced C++ / \
-distributed-systems engineer. You are given a MASTER RESUME and a JOB DESCRIPTION.
+SYSTEM = """You are a precise resume-tailoring tool. You output ONLY the three \
+requested markdown sections. No greetings, no interview tips, no closing remarks. \
+Never invent experience, employers, numbers, or technologies that are not in the \
+resume — you may only reframe what is already there."""
 
-Produce Markdown with exactly these sections:
+
+def build_prompt(resume: str, jd: str) -> str:
+    """Resume + JD, then the format spec LAST (recency helps smaller models)."""
+    return f"""MASTER RESUME:
+{resume}
+
+JOB DESCRIPTION (for the role you are tailoring to):
+{jd[:3500]}
+
+Now output EXACTLY these three markdown sections and NOTHING else:
 
 ## Keyword coverage
-A score X/Y and a one-line read on overall fit.
+One line: a score like "7/12" (JD must-have skills the resume already shows) plus a
+short read on fit.
 
 ## Gaps
-Bullet list of concrete requirements in the JD that are NOT evidenced in the
-resume. Be specific (skill, system, scale). If a gap is unfixable honestly, say so.
+Bullet list. Each bullet = a concrete requirement in the JD that the resume does NOT
+evidence. Be specific. If a gap can't honestly be closed, say so.
 
 ## Bullet rewrites
-For 4-8 existing resume bullets, show `BEFORE:` then `AFTER:` rewrites that map the
-candidate's REAL experience onto this JD's language and priorities.
-
-HARD RULE: never invent experience, employers, numbers, or technologies the resume
-does not support. Rewrites may reframe and re-emphasize only what is already true.
-If the resume is empty or a template, say so and stop."""
+4-6 items. Each item is two lines:
+BEFORE: <an existing bullet copied from the resume>
+AFTER: <that bullet rewritten to match this JD's language and priorities>
+Do not invent anything — only reframe real resume content."""
 
 
 def is_resume_filled(text: str) -> bool:
     stripped = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
     return stripped.count("TODO") <= 2 and len(stripped.strip()) > 200
-
-
-def build_prompt(resume: str, jd: str) -> str:
-    return f"# MASTER RESUME\n\n{resume}\n\n---\n\n# JOB DESCRIPTION\n\n{jd}"
 
 
 def slugify(name: str) -> str:
