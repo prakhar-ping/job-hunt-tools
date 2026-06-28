@@ -1,0 +1,88 @@
+# job-hunt-tools
+
+Three CLI tools for a C++ / distributed-systems job search, sharing one config +
+master resume + Anthropic client.
+
+| Tool | Command | Needs |
+|------|---------|-------|
+| **Monitor** — daily new-listing digest | `python -m monitor` | nothing (email optional) |
+| **Tailor** — JD → gaps + bullet rewrites | `python -m tailor "<url>"` | `ANTHROPIC_API_KEY`, filled `resume.md` |
+| **Referral** — paste contacts → drafts | `pbpaste \| python -m referral --company X` | `ANTHROPIC_API_KEY` |
+
+All commands run from the repo root using the venv interpreter:
+`/Users/prakharverma/Desktop/job-hunt-tools/.venv/bin/python`.
+
+## Setup
+
+```bash
+cd ~/Desktop/job-hunt-tools
+python3 -m venv .venv
+./.venv/bin/pip install -r requirements.txt
+cp .env.example .env        # then edit .env
+```
+
+Fill `.env`:
+- `ANTHROPIC_API_KEY` — console.anthropic.com (tailor + referral)
+- `GMAIL_USER` / `GMAIL_APP_PASSWORD` — Google Account → Security → 2-Step
+  Verification → App passwords (monitor email digest; optional)
+
+Fill `shared/resume.md` with your real experience (replace the template).
+
+Tune the job filter anytime in `shared/config.yaml` (`match:` block).
+
+## Monitor
+
+```bash
+./.venv/bin/python -m monitor --dry-run   # scrape + diff + print, send nothing
+./.venv/bin/python -m monitor             # + email + macOS notif + new_jobs_<date>.md
+```
+
+Coverage: 6 companies via Greenhouse JSON APIs (Rubrik, MongoDB, Druva,
+Pure Storage, ClickHouse, Couchbase). The other 7 (Cohesity, Nutanix, NetApp,
+VMware, Confluent, Arista, Playrix) have no public ATS API wired yet — each run
+lists them with a careers link to check by hand.
+
+First run seeds a baseline (emails nothing). Each later run reports only listings
+new since the previous run.
+
+### Daily cron (installed)
+```
+0 9 * * *  cd <repo> && <repo>/.venv/bin/python -m monitor >> <repo>/monitor/cron.log 2>&1
+```
+Edit/remove with `crontab -e`. macOS may prompt for Full Disk Access for `cron`
+the first time — grant it in System Settings → Privacy & Security.
+
+## Tailor
+
+```bash
+./.venv/bin/python -m tailor "https://job-boards.greenhouse.io/clickhouse/jobs/123"
+pbpaste | ./.venv/bin/python -m tailor -    # paste a JD instead
+```
+Outputs keyword coverage, gaps, and BEFORE/AFTER bullet rewrites. Refuses to
+invent experience. Saves `tailored/<company>-<date>.md`.
+
+## Referral
+
+```bash
+# copy LinkedIn search results (name + "Title at Company" lines), then:
+pbpaste | ./.venv/bin/python -m referral --company Rubrik
+```
+Parses contacts, keeps engineering titles at the target company, drafts a
+personalized message each. Drafting only — no LinkedIn calls, no sending.
+Saves `referral_drafts/<company>-<date>.md`.
+
+## Tests
+
+```bash
+./.venv/bin/python -m pytest    # offline: matcher, diff, normalizers, parsing
+```
+
+## Layout
+
+```
+shared/    config.yaml, resume.md, claude_client.py, env.py
+monitor/   scrapers.py, monitor.py        (module 2)
+tailor/    jd_fetch.py, tailor.py         (module 1)
+referral/  referral.py                    (module 3)
+tests/     offline pytest suite
+```

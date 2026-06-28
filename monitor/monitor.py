@@ -11,6 +11,8 @@ from pathlib import Path
 
 import yaml
 
+from shared.env import is_placeholder, load_env
+
 from .scrapers import UnsupportedCompany, fetch_company
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -101,8 +103,8 @@ def send_email(config: dict, report: str) -> None:
 
     user = os.environ.get("GMAIL_USER")
     pw = os.environ.get("GMAIL_APP_PASSWORD")
-    if not (user and pw):
-        print("[email] GMAIL_USER / GMAIL_APP_PASSWORD not set — skipping email.",
+    if is_placeholder(pw) or not user:
+        print("[email] GMAIL_APP_PASSWORD not configured — skipping email.",
               file=sys.stderr)
         return
     msg = MIMEText(report, "plain")
@@ -117,6 +119,7 @@ def send_email(config: dict, report: str) -> None:
 
 
 def run(dry_run: bool = False) -> str:
+    load_env()
     config = load_config()
     match_cfg = config["match"]
     new_by_company: dict[str, list[dict]] = {}

@@ -5,3 +5,5 @@ referral_drafts/
 new_jobs_*.md
 __pycache__/
 *.pyc
+monitor/cron.log
+.venv/
