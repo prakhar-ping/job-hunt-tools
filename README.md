@@ -1,7 +1,13 @@
 # job-hunt-tools
 
-Three CLI tools for a C++ / distributed-systems job search, sharing one config +
-master resume + Anthropic client.
+[![CI](https://github.com/prakhar-ping/job-hunt-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/prakhar-ping/job-hunt-tools/actions/workflows/ci.yml)
+
+Job-search automation for a C++ / game-dev engineer: a web-wide job **monitor**,
+a resume **tailor**, a referral **drafter**, and a localhost **dashboard** —
+sharing one config + master resume + Anthropic client.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design. Common tasks via
+`make install` / `make test` / `make lint` / `make web`.
 
 | Tool | Command | Needs |
 |------|---------|-------|

@@ -8,7 +8,7 @@ import os
 import re
 import subprocess
 import sys
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 import yaml
@@ -29,7 +29,7 @@ def load_config(path: Path = CONFIG) -> dict:
         return yaml.safe_load(f)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _compile(terms: tuple[str, ...]):
     """Whole-word matcher tolerant of '+' (c++) and '#' (c#).
     Boundaries are 'not preceded/followed by a word char', so 'engine' does NOT

@@ -7,3 +7,10 @@ __pycache__/
 *.pyc
 monitor/cron.log
 .venv/
+
+# packaging / build
+*.egg-info/
+build/
+dist/
+.ruff_cache/
+.pytest_cache/

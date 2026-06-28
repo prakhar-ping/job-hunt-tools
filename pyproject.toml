@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job-hunt-tools"
+version = "0.1.0"
+description = "C++/game-dev job-search automation: web-wide monitor, resume tailor, referral drafter, and a localhost dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Prakhar Verma" }]
+license = { text = "MIT" }
+dependencies = [
+    "requests>=2.31",
+    "PyYAML>=6.0",
+    "beautifulsoup4>=4.12",
+    "anthropic>=0.40",
+    "flask>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+jht-monitor = "monitor.monitor:main"
+jht-tailor = "tailor.tailor:main"
+jht-referral = "referral.referral:main"
+jht-web = "web.app:main"
+
+[tool.setuptools]
+packages = ["shared", "monitor", "tailor", "referral", "web"]
+
+[tool.ruff]
+line-length = 90
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

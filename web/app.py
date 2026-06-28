@@ -11,7 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 
-from flask import Flask, redirect, render_template_string, request, url_for
+from flask import Flask, redirect, render_template_string, url_for
 
 from monitor.monitor import SNAP_DIR
 from monitor.monitor import run as run_monitor

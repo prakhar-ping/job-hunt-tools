@@ -3,7 +3,6 @@ from referral.referral import filter_contacts, parse_contacts
 from tailor.jd_fetch import clean_html, company_from_url
 from tailor.tailor import is_resume_filled, slugify
 
-
 # --- tailor ---------------------------------------------------------------
 
 def test_company_from_greenhouse_url():
