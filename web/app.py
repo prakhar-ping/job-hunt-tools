@@ -11,9 +11,9 @@ from __future__ import annotations
 import datetime as dt
 import json
 import threading
+import uuid
 from pathlib import Path
 
-import markdown as md
 from flask import (
     Flask,
     Response,
@@ -153,7 +153,7 @@ TEMPLATE = """
               style="display:inline;margin-left:8px">
           <input type="hidden" name="url" value="{{ j.url }}">
           <input type="hidden" name="title" value="{{ j.title }}">
-          <button class="tailor">✎ Tailor → PDF</button>
+          <button class="tailor">✎ Tailor + ATS</button>
         </form>
       </div>
     {% endfor %}
@@ -190,44 +190,91 @@ def index():
                                   today=dt.date.today().isoformat())
 
 
+_tailor_cache: dict[str, dict] = {}  # tid -> {data, company}
+
 RESULT_TEMPLATE = """
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Tailored — {{ title }}</title>
 <style>
-  body { font: 16px/1.6 -apple-system, system-ui, sans-serif;
-         background: #0f1115; color: #e6e6e6; max-width: 820px;
+  body { font: 15px/1.6 -apple-system, system-ui, sans-serif;
+         background: #0f1115; color: #e6e6e6; max-width: 860px;
          margin: 0 auto; padding: 24px; }
   a { color: #7dd3fc; }
-  h1 { font-size: 20px; } h2 { font-size: 16px; border-bottom: 1px solid #2a2e37;
-       padding-bottom: 4px; margin-top: 28px; }
-  code, pre { background: #171a21; border-radius: 6px; padding: 1px 5px; }
   .back { color: #93c5fd; text-decoration: none; }
+  h1 { font-size: 20px; margin: 8px 0 4px; }
+  .score { font-size: 40px; font-weight: 800; }
+  .bar { height: 10px; background: #20242c; border-radius: 6px; overflow: hidden;
+         margin: 8px 0 4px; }
+  .bar > div { height: 100%; }
+  .kw { display: inline-block; padding: 2px 9px; margin: 3px 4px 0 0;
+        border-radius: 12px; font-size: 12.5px; }
+  .hit { background: #14351f; color: #86efac; }
+  .miss { background: #3a1d1d; color: #fca5a5; }
+  .dl { display: inline-block; margin: 18px 0 4px; padding: 11px 18px;
+        background: #3b82f6; color: #fff; font-weight: 700; border-radius: 8px;
+        text-decoration: none; }
+  .note { color: #8b93a1; font-size: 13px; margin-top: 14px; }
+  {% if error %}.err { background:#3a1d1d; padding:14px; border-radius:8px; }{% endif %}
 </style></head>
 <body>
   <a class="back" href="{{ url_for('index') }}">← back to jobs</a>
   <h1>Tailored resume — {{ title }}</h1>
-  {{ body|safe }}
+  {% if error %}
+    <div class="err">{{ error }}</div>
+  {% else %}
+    {% set c = '#22c55e' if ats.pct >= 70
+       else '#eab308' if ats.pct >= 45 else '#ef4444' %}
+    <div class="score" style="color:{{ c }}">{{ ats.pct }}% ATS match</div>
+    <div class="bar"><div style="width:{{ ats.pct }}%;background:{{ c }}"></div></div>
+    <div class="note">{{ ats.matched|length }} of {{ ats.total }} JD keywords present
+      in your tailored resume.</div>
+
+    <p style="margin-top:16px"><b>Matched</b> (in your resume):</p>
+    {% for k in ats.matched %}<span class="kw hit">{{ k }}</span>{% endfor %}
+
+    <p style="margin-top:14px"><b>Missing</b> (the JD wants these, your resume
+      doesn't show them):</p>
+    {% for k in ats.missing %}<span class="kw miss">{{ k }}</span>{% endfor %}
+
+    <div><a class="dl"
+      href="{{ url_for('tailor_pdf', tid=tid) }}">⬇ Download tailored PDF</a></div>
+
+    <div class="note">Missing keywords are genuine gaps — the tool will not invent
+      them (fabricated skills get you auto-rejected and burn the referral). A score
+      under ~45% usually means this role doesn't fit your profile; aim your energy
+      at higher-scoring postings.</div>
+  {% endif %}
 </body></html>
 """
 
 
 @app.route("/tailor", methods=["POST"])
 def tailor():
-    """Generate a full tailored resume for one job and return it as a PDF download."""
+    """Tailor the resume to a job: show the ATS score, then offer the PDF."""
     url = request.form.get("url", "")
     title = request.form.get("title", "job")
     if not url:
         return redirect(url_for("index"))
     try:
-        data, company = tailor_resume_structured(url)
-        pdf = resume_pdf(data)
+        data, company, ats = tailor_resume_structured(url)
     except Exception as e:  # LLM down, fetch failure, template resume, etc.
-        body = md.markdown(
-            f"**Could not generate the tailored resume.** {e}\n\n"
-            "Check that Ollama is running (`brew services start ollama`) or, for "
-            "the Anthropic provider, that `ANTHROPIC_API_KEY` is set in `.env`.")
-        return render_template_string(RESULT_TEMPLATE, title=title, body=body)
-    fname = f"resume-{slugify(company)}-{dt.date.today().isoformat()}.pdf"
+        err = (f"Could not tailor: {e}. Check that Ollama is running "
+               "(brew services start ollama) or that the configured provider works.")
+        return render_template_string(RESULT_TEMPLATE, title=title, error=err)
+    tid = uuid.uuid4().hex
+    _tailor_cache[tid] = {"data": data, "company": company}
+    return render_template_string(RESULT_TEMPLATE, title=title, ats=ats, tid=tid,
+                                  error=None)
+
+
+@app.route("/tailor-pdf/<tid>")
+def tailor_pdf(tid):
+    """Download the PDF for an already-tailored result (no re-run)."""
+    entry = _tailor_cache.get(tid)
+    if not entry:
+        return redirect(url_for("index"))
+    pdf = resume_pdf(entry["data"])
+    fname = f"resume-{slugify(entry['company'])}-{dt.date.today().isoformat()}.pdf"
     return Response(pdf, mimetype="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{fname}"'})
 

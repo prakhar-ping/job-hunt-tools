@@ -12,8 +12,20 @@ import yaml
 from shared.claude_client import complete_cfg
 from shared.env import load_env
 
+from .ats import extract_jd_keywords, score
 from .jd_fetch import fetch_jd
 from .resume_model import parse_resume_md
+
+
+def resume_to_text(d: dict) -> str:
+    """Flatten a structured resume to plain text (for ATS scoring)."""
+    parts = [d.get("summary", "")]
+    parts += [f"{s.get('label', '')} {s.get('value', '')}" for s in d.get("skills", [])]
+    for r in d.get("experience", []):
+        parts += [r.get("title", "")] + r.get("bullets", [])
+    for p in d.get("projects", []):
+        parts += [p.get("name", ""), p.get("stack", "")] + p.get("bullets", [])
+    return " ".join(parts)
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "shared" / "config.yaml"
@@ -91,12 +103,22 @@ the relevant ones
 Use ONLY real content from the master resume. No invented facts."""
 
 
-SYSTEM_JSON = """You tailor a resume to a job. You are given the resume as JSON and \
-a job description. Return the SAME JSON structure with text reworded to emphasize \
-what THIS job values. RULES: keep every key and the same shape; keep every job, \
-project, date, and number; do NOT invent skills, tools, or experience that are not \
-already present; you MAY reorder the skills, reword the summary, and reword bullets \
-to use the job's language. Return ONLY the JSON object, no commentary."""
+SYSTEM_JSON = """You are an expert resume writer optimizing for ATS keyword \
+matching. You are given a resume as JSON, a job description, and the JD's ATS \
+keywords. Return the SAME JSON structure, reworded so the resume naturally \
+includes EVERY ATS keyword the candidate's REAL experience already supports, using \
+the job's exact wording.
+
+RULES:
+- Keep every key and the same shape; keep every job, project, date, and number.
+- For each ATS keyword: if the resume genuinely supports it (even under a different
+  name, e.g. "cache-friendly data structures" supports "caching"), rewrite a bullet
+  or skill to use the keyword's exact phrasing. If the candidate does NOT have it,
+  do NOT add it — never fabricate.
+- Reorder skills so the most JD-relevant come first; you may add a real skill to a
+  skills value if the candidate clearly has it but it wasn't listed.
+- Keep bullets truthful, specific, and quantified.
+Return ONLY the JSON object, no commentary."""
 
 
 def _validated(data: object, baseline: dict) -> dict:
@@ -114,11 +136,12 @@ def _validated(data: object, baseline: dict) -> dict:
     return out
 
 
-def tailor_resume_structured(source: str) -> tuple[dict, str]:
-    """Tailor the resume to a JD, returning a structured dict + company.
-    The LLM only rewrites text; layout/fields stay fixed. Falls back to the
-    untailored (but correctly structured) resume if the model output is unusable."""
+def tailor_resume_structured(source: str) -> tuple[dict, str, dict]:
+    """Tailor the resume to a JD. Returns (structured_resume, company, ats_report).
+    The LLM only rewrites text within the parsed structure; on bad output it falls
+    back to the untailored resume. ats_report = score of the result vs JD keywords."""
     config = yaml.safe_load(CONFIG.read_text())
+    llm = config["llm"]
     resume = RESUME.read_text()
     if not is_resume_filled(resume):
         raise ValueError("shared/resume.md is still the template — fill it first.")
@@ -126,14 +149,20 @@ def tailor_resume_structured(source: str) -> tuple[dict, str]:
     jd, company = fetch_jd(source)
     if not jd:
         raise ValueError("Empty job description.")
+    keywords = extract_jd_keywords(jd, llm)
     user = (f"RESUME JSON:\n{json.dumps(baseline, ensure_ascii=False)}\n\n"
-            f"JOB DESCRIPTION:\n{jd[:3000]}\n\nReturn the tailored JSON now.")
+            f"JOB DESCRIPTION:\n{jd[:3000]}\n\n"
+            f"JD ATS KEYWORDS (weave in every one the resume truly supports): "
+            f"{', '.join(keywords)}\n\nReturn the tailored JSON now.")
+    data = baseline
     try:
-        raw = complete_cfg(SYSTEM_JSON, user, config["llm"], max_tokens=3500)
-        data = json.loads(re.search(r"\{.*\}", raw, re.DOTALL).group(0))
-        return _validated(data, baseline), company
+        raw = complete_cfg(SYSTEM_JSON, user, llm, max_tokens=3500)
+        data = _validated(json.loads(re.search(r"\{.*\}", raw, re.DOTALL).group(0)),
+                          baseline)
     except Exception:
-        return baseline, company
+        data = baseline
+    ats = score(resume_to_text(data), keywords)
+    return data, company, ats
 
 
 def tailor_resume(source: str) -> tuple[str, str]:
