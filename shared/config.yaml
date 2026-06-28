@@ -1,0 +1,80 @@
+# Job-hunt-tools config
+
+model: claude-sonnet-4-6
+
+# Email delivery (filled by user in real runs; --dry-run ignores these)
+email:
+  sender: jobhunter@example.com
+  recipient: jobhunter@example.com
+
+# Tight / high-precision match (case-insensitive substring).
+# Rule: drop if any `exclude` term is in the title; else keep if any `title`
+# term is in the title, OR (an engineering title AND a rare `desc_strong`
+# term in the description). c++/distributed deliberately live in `title` only —
+# in descriptions they're company boilerplate (MongoDB/ClickHouse are C++).
+match:
+  title:         # any of these in the TITLE => match
+    - c++
+    - distributed
+    - storage engine
+    - query engine
+    - file system
+    - filesystem
+    - kernel
+    - replication
+    - database internal
+    - consensus
+    - raft
+    - paxos
+    - lsm
+    - b-tree
+    - lock-free
+    - mvcc
+    - datapath
+    - systems software
+  desc_strong:   # rare enough to not be boilerplate; need an eng title too
+    - raft
+    - paxos
+    - lsm-tree
+    - write-ahead log
+    - lock-free
+    - b-tree
+    - consensus protocol
+    - mvcc
+  exclude:       # drop if any appear in the title
+    - sales
+    - solutions architect
+    - account executive
+    - pre-sales
+    - presales
+    - technical services
+    - support engineer
+    - security engineer
+    - product design
+    - product manager
+    - account manager
+    - public relations
+    - commercial
+    - growth
+    - legal
+    - recruiter
+    - marketing
+    - customer success
+    - intern
+
+# ATS map. type: greenhouse | lever | unsupported
+# Greenhouse: token -> boards-api.greenhouse.io/v1/boards/<token>/jobs
+companies:
+  Rubrik:        {type: greenhouse, token: rubrik}
+  MongoDB:       {type: greenhouse, token: mongodb}
+  Druva:         {type: greenhouse, token: druva}
+  "Pure Storage": {type: greenhouse, token: purestorage}
+  ClickHouse:    {type: greenhouse, token: clickhouse}
+  Couchbase:     {type: greenhouse, token: couchbaseinc}
+  Cohesity:      {type: unsupported, careers: "https://www.cohesity.com/company/careers/"}
+  Nutanix:       {type: unsupported, careers: "https://nutanix.eightfold.ai/careers"}
+  NetApp:        {type: unsupported, careers: "https://careers.netapp.com/"}
+  VMware:        {type: unsupported, careers: "https://careers.broadcom.com/"}
+  Confluent:     {type: unsupported, careers: "https://careers.confluent.io/"}
+  Arista:        {type: unsupported, careers: "https://www.arista.com/en/careers"}
+  Playrix:       {type: unsupported, careers: "https://playrix.com/vacancies/"}
