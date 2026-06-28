@@ -58,6 +58,51 @@ def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "job"
 
 
+SYSTEM_RESUME = """You are a resume editor. You rewrite a candidate's master \
+resume into a complete resume tailored to one job. Use ONLY facts present in the \
+master resume — same employers, titles, dates, projects, and numbers. You may \
+reorder, reword, and re-emphasize to match the job's priorities and language, but \
+you must NOT invent skills, tools, or achievements that are not already in the \
+resume. Output the full resume in clean Markdown and nothing else (no commentary)."""
+
+
+def build_resume_prompt(resume: str, jd: str) -> str:
+    return f"""MASTER RESUME (the only source of truth — do not add facts):
+{resume}
+
+TARGET JOB DESCRIPTION:
+{jd[:3500]}
+
+Now output a COMPLETE resume in Markdown, tailored to the job above. Structure:
+# Name
+contact line (email · phone · location · links) — copy from the master resume
+## Summary
+3-4 lines reframed toward this role
+## Skills
+grouped, leading with the skills this job cares about most
+## Experience
+every role from the master resume, dates kept; bullets reworded to foreground the
+experience this job values
+## Projects
+the relevant ones
+## Education
+Use ONLY real content from the master resume. No invented facts."""
+
+
+def tailor_resume(source: str) -> tuple[str, str]:
+    """Generate a full tailored resume (markdown) for a JD. Returns (md, company)."""
+    config = yaml.safe_load(CONFIG.read_text())
+    resume = RESUME.read_text()
+    if not is_resume_filled(resume):
+        raise ValueError("shared/resume.md is still the template — fill it first.")
+    jd, company = fetch_jd(source)
+    if not jd:
+        raise ValueError("Empty job description.")
+    md = complete_cfg(SYSTEM_RESUME, build_resume_prompt(resume, jd),
+                      config["llm"], max_tokens=3000)
+    return md, company
+
+
 def run(source: str) -> str:
     load_env()
     config = yaml.safe_load(CONFIG.read_text())

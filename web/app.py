@@ -14,10 +14,18 @@ import threading
 from pathlib import Path
 
 import markdown as md
-from flask import Flask, redirect, render_template_string, request, url_for
+from flask import (
+    Flask,
+    Response,
+    redirect,
+    render_template_string,
+    request,
+    url_for,
+)
 
 from monitor.monitor import SNAP_DIR, load_config
 from monitor.monitor import run as run_monitor
+from shared.pdf import markdown_to_pdf
 from shared.profile import (
     clear_profile,
     derive_profile,
@@ -25,7 +33,7 @@ from shared.profile import (
     load_profile,
     save_profile,
 )
-from tailor.tailor import run as tailor_run
+from tailor.tailor import slugify, tailor_resume
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "shared" / "uploads"
 
@@ -145,7 +153,7 @@ TEMPLATE = """
               style="display:inline;margin-left:8px">
           <input type="hidden" name="url" value="{{ j.url }}">
           <input type="hidden" name="title" value="{{ j.title }}">
-          <button class="tailor">✎ Tailor</button>
+          <button class="tailor">✎ Tailor → PDF</button>
         </form>
       </div>
     {% endfor %}
@@ -205,19 +213,23 @@ RESULT_TEMPLATE = """
 
 @app.route("/tailor", methods=["POST"])
 def tailor():
-    """Tailor the master resume to one job's JD. Needs ANTHROPIC_API_KEY."""
+    """Generate a full tailored resume for one job and return it as a PDF download."""
     url = request.form.get("url", "")
     title = request.form.get("title", "job")
     if not url:
         return redirect(url_for("index"))
     try:
-        result = tailor_run(url)
-    except Exception as e:  # missing key, fetch failure, etc.
-        result = (f"**Could not tailor.** {e}\n\n"
-                  "If this is about the API key, add `ANTHROPIC_API_KEY` to "
-                  "`.env` (console.anthropic.com) and try again.")
-    body = md.markdown(result, extensions=["fenced_code", "tables"])
-    return render_template_string(RESULT_TEMPLATE, title=title, body=body)
+        resume_md, company = tailor_resume(url)
+        pdf = markdown_to_pdf(resume_md)
+    except Exception as e:  # LLM down, fetch failure, template resume, etc.
+        body = md.markdown(
+            f"**Could not generate the tailored resume.** {e}\n\n"
+            "Check that Ollama is running (`brew services start ollama`) or, for "
+            "the Anthropic provider, that `ANTHROPIC_API_KEY` is set in `.env`.")
+        return render_template_string(RESULT_TEMPLATE, title=title, body=body)
+    fname = f"resume-{slugify(company)}-{dt.date.today().isoformat()}.pdf"
+    return Response(pdf, mimetype="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{fname}"'})
 
 
 @app.route("/refresh", methods=["POST"])

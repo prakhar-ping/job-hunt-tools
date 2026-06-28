@@ -22,22 +22,26 @@ def test_index_renders(monkeypatch):
     assert "@ 2K" in body                 # aggregator source shown
 
 
-def test_tailor_route_renders(monkeypatch):
-    monkeypatch.setattr(webapp, "tailor_run",
-                        lambda url: "## Gaps\n- needs Vulkan")
+def test_tailor_route_returns_pdf(monkeypatch):
+    monkeypatch.setattr(webapp, "tailor_resume",
+                        lambda url: ("# Resume\n## Skills\n- C++", "ClickHouse"))
+    monkeypatch.setattr(webapp, "markdown_to_pdf", lambda md_text: b"%PDF-1.4 fake")
     client = webapp.app.test_client()
     r = client.post("/tailor", data={"url": "http://x/1", "title": "C++ Dev"})
-    body = r.get_data(as_text=True)
     assert r.status_code == 200
-    assert "Tailored resume" in body and "needs Vulkan" in body and "C++ Dev" in body
+    assert r.mimetype == "application/pdf"
+    assert r.data.startswith(b"%PDF")
+    assert "attachment" in r.headers["Content-Disposition"]
+    assert "clickhouse" in r.headers["Content-Disposition"]
 
 
 def test_tailor_route_handles_error(monkeypatch):
     def boom(url):
-        raise RuntimeError("ANTHROPIC_API_KEY not set")
-    monkeypatch.setattr(webapp, "tailor_run", boom)
+        raise RuntimeError("Ollama not reachable")
+    monkeypatch.setattr(webapp, "tailor_resume", boom)
     r = webapp.app.test_client().post("/tailor", data={"url": "u", "title": "t"})
-    assert r.status_code == 200 and "Could not tailor" in r.get_data(as_text=True)
+    body = r.get_data(as_text=True)
+    assert r.status_code == 200 and "Could not generate" in body
 
 
 def test_load_jobs_reads_snapshots(tmp_path, monkeypatch):

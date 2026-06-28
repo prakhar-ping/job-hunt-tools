@@ -111,9 +111,11 @@ scrape (updates snapshots, no email). Reads the same snapshot data the monitor
 writes. Bound to localhost only.
 
 **Tailor a resume to any job from the dashboard.** Every job row has a
-**✎ Tailor** button — it fetches that posting's JD, diffs it against
-`shared/resume.md`, and opens a page with keyword coverage, gaps, and concrete
-BEFORE/AFTER bullet rewrites for that specific role (needs `ANTHROPIC_API_KEY`).
+**✎ Tailor → PDF** button — it fetches that posting's JD, rewrites your
+`shared/resume.md` into a complete resume tailored to that role (using only your
+real experience), renders it to a PDF, and downloads it as
+`resume-<company>-<date>.pdf`. Uses the configured LLM (free local Ollama by
+default).
 
 **Upload a resume to make the search generic.** The dashboard has a resume
 upload (PDF / md / txt). On upload, the resume is parsed into search keywords +
