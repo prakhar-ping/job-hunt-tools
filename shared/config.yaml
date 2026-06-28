@@ -7,70 +7,110 @@ email:
   sender: jobhunter@example.com
   recipient: jobhunter@example.com
 
-# Tight / high-precision match (case-insensitive substring).
+# Hybrid match: game-dev + transferable high-performance systems C++.
+# Matching is WORD-BOUNDARY (so "engine" does NOT match "engineer").
 # Rule: drop if any `exclude` term is in the title; else keep if any `title`
 # term is in the title, OR (an engineering title AND a rare `desc_strong`
-# term in the description). c++/distributed deliberately live in `title` only —
-# in descriptions they're company boilerplate (MongoDB/ClickHouse are C++).
+# term in the description).
 match:
-  title:         # any of these in the TITLE => match
+  title:          # any of these as a whole word in the TITLE => match
+    # --- game-dev ---
     - c++
+    - c#
+    - game
+    - gameplay
+    - game engine
+    - engine programmer
+    - graphics
+    - rendering
+    - shader
+    - unity
+    - unreal
+    - mobile
+    - simulation
+    - physics
+    - netcode
+    - multiplayer
+    - tools programmer
+    - client engineer
+    # --- transferable systems C++ ---
+    - performance
+    - optimization
+    - systems engineer
     - distributed
     - storage engine
     - query engine
-    - file system
-    - filesystem
     - kernel
-    - replication
-    - database internal
-    - consensus
-    - raft
-    - paxos
-    - lsm
-    - b-tree
+    - database
+    - low latency
+    - low-latency
+  desc_strong:    # rare; counts in description only on an engineering title
+    - lua
+    - opengl
+    - vulkan
+    - directx
+    - memory allocator
+    - object pooling
+    - entity component
+    - frame rate
+    - cache-friendly
+    - modern c++
     - lock-free
-    - mvcc
-    - datapath
-    - systems software
-  desc_strong:   # rare enough to not be boilerplate; need an eng title too
+    - rocksdb
     - raft
-    - paxos
-    - lsm-tree
-    - write-ahead log
-    - lock-free
-    - b-tree
-    - consensus protocol
-    - mvcc
-  exclude:       # drop if any appear in the title
+  exclude:        # drop if any appear as a whole word in the title
     - sales
-    - solutions architect
     - account executive
-    - pre-sales
-    - presales
-    - technical services
-    - support engineer
-    - security engineer
-    - product design
-    - product manager
     - account manager
-    - public relations
-    - commercial
-    - growth
-    - legal
     - recruiter
     - marketing
-    - customer success
+    - legal
     - intern
+    - artist
+    - animator
+    - designer            # Game/UX/Level Designer — not a programming role
+    - art                 # Art Lead / Art Director / Concept Art
+    - production          # Game Production / Director of Production
+    - technical artist
+    - qa
+    - producer
+    - narrative
+    - insights
+    - research scientist
+    - data scientist
+    - community manager
+    - product manager
+    - product design
+    - solutions architect
+    - pre-sales
+    - presales
+    - support engineer
+    - customer success
+    - sound
 
 # ATS map. type: greenhouse | lever | unsupported
 # Greenhouse: token -> boards-api.greenhouse.io/v1/boards/<token>/jobs
+# Lever:      token -> api.lever.co/v0/postings/<token>
 companies:
+  # --- game studios (match the resume) ---
+  Riot:          {type: greenhouse, token: riotgames}
+  Epic:          {type: greenhouse, token: epicgames}
+  Roblox:        {type: greenhouse, token: roblox}
+  Rockstar:      {type: greenhouse, token: rockstargames}
+  Bungie:        {type: greenhouse, token: bungie}
+  "Naughty Dog": {type: greenhouse, token: naughtydog}
+  Unity:         {type: greenhouse, token: unity3d}
+  Scopely:       {type: greenhouse, token: scopely}
+  Wooga:         {type: greenhouse, token: wooga}
+  Voodoo:        {type: lever, token: voodoo}
+  # --- storage / database (transferable high-perf C++) ---
   Rubrik:        {type: greenhouse, token: rubrik}
   MongoDB:       {type: greenhouse, token: mongodb}
   Druva:         {type: greenhouse, token: druva}
   "Pure Storage": {type: greenhouse, token: purestorage}
   ClickHouse:    {type: greenhouse, token: clickhouse}
   Couchbase:     {type: greenhouse, token: couchbaseinc}
+  # --- no public ATS API wired yet (listed with careers link each run) ---
   Cohesity:      {type: unsupported, careers: "https://www.cohesity.com/company/careers/"}
   Nutanix:       {type: unsupported, careers: "https://nutanix.eightfold.ai/careers"}
   NetApp:        {type: unsupported, careers: "https://careers.netapp.com/"}

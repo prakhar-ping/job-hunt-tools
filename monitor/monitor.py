@@ -5,8 +5,10 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -25,17 +27,35 @@ def load_config(path: Path = CONFIG) -> dict:
         return yaml.safe_load(f)
 
 
+@lru_cache(maxsize=None)
+def _compile(terms: tuple[str, ...]):
+    """Whole-word matcher tolerant of '+' (c++) and '#' (c#).
+    Boundaries are 'not preceded/followed by a word char', so 'engine' does NOT
+    match 'engineer' but 'c++' still matches."""
+    if not terms:
+        return None
+    pat = "|".join(re.escape(t) for t in terms)
+    return re.compile(rf"(?<![a-z0-9])(?:{pat})(?![a-z0-9])", re.IGNORECASE)
+
+
+_ENG_TITLE = re.compile(r"(?<![a-z0-9])(engineer|developer|programmer)",
+                        re.IGNORECASE)
+
+
 def matches_keywords(listing: dict, match_cfg: dict) -> bool:
-    """Tight match: drop on excluded title; keep on a title term in the title,
-    or a rare desc_strong term in the description of an engineering role."""
-    title = listing.get("title", "").lower()
-    desc = listing.get("description", "").lower()
-    if any(x in title for x in match_cfg.get("exclude", [])):
+    """Match: drop on excluded title; keep on a title term in the title, or a
+    rare desc_strong term in the description of an engineering role.
+    All matching is whole-word."""
+    title = listing.get("title", "")
+    desc = listing.get("description", "")
+    excl = _compile(tuple(match_cfg.get("exclude", [])))
+    if excl and excl.search(title):
         return False
-    if any(t in title for t in match_cfg.get("title", [])):
+    title_re = _compile(tuple(match_cfg.get("title", [])))
+    if title_re and title_re.search(title):
         return True
-    is_eng = "engineer" in title or "developer" in title
-    return is_eng and any(s in desc for s in match_cfg.get("desc_strong", []))
+    strong = _compile(tuple(match_cfg.get("desc_strong", [])))
+    return bool(strong and _ENG_TITLE.search(title) and strong.search(desc))
 
 
 def diff_new(previous: list[dict], current: list[dict]) -> list[dict]:

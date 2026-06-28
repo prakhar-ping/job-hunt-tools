@@ -20,6 +20,14 @@ def test_title_term_matches():
     assert matches_keywords(L("Distributed Systems Engineer"), MATCH)
 
 
+def test_word_boundary_engine_not_engineer():
+    # 'engine' must not match the substring inside 'engineer'.
+    cfg = {"title": ["engine", "c++"], "desc_strong": [], "exclude": []}
+    assert not matches_keywords(L("Sales Engineer"), cfg)   # 'engine' in 'Engineer'
+    assert matches_keywords(L("Game Engine Programmer"), cfg)
+    assert matches_keywords(L("Senior C++ Developer"), cfg)  # '+' survives boundary
+
+
 def test_excluded_title_dropped_even_if_keyword_present():
     # "Sales Engineer, C++ Platform" has c++ but is excluded by 'sales'
     assert not matches_keywords(L("Sales Engineer, C++ Platform"), MATCH)
