@@ -105,7 +105,7 @@ Saves `referral_drafts/<company>-<date>.md`.
 ## Web dashboard (localhost)
 
 ```bash
-./.venv/bin/python -m web      # then open http://127.0.0.1:5000
+./.venv/bin/python -m web      # then open http://127.0.0.1:5050
 ```
 One page: all current matched jobs grouped by source (companies + Web (Adzuna)),
 clickable links, a live filter box, and a **Refresh** button that re-runs the

@@ -320,7 +320,10 @@ def clear_resume():
 
 
 def main():
-    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
+    # Port 5000 is taken by macOS Control Center (AirPlay Receiver), so use 5050.
+    import os
+    port = int(os.environ.get("PORT", "5050"))
+    app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
 
 
 if __name__ == "__main__":
