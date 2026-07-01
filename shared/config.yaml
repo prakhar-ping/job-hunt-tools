@@ -23,6 +23,7 @@ match:
     - c++
     - c#
     - game
+    - game developer
     - gameplay
     - game engine
     - engine programmer
@@ -38,11 +39,16 @@ match:
     - multiplayer
     - tools programmer
     - client engineer
-    # --- transferable systems C++ ---
+    # --- c++ / distributed systems ---
+    - c++ engineer
+    - c++ developer
     - performance
     - optimization
     - systems engineer
     - distributed
+    - distributed system
+    - distributed systems
+    - distributed systems engineer
     - storage engine
     - query engine
     - kernel
@@ -63,6 +69,8 @@ match:
     - lock-free
     - rocksdb
     - raft
+    - distributed computing
+    - microservices
   exclude:        # drop if any appear as a whole word in the title
     - sales
     - account executive
@@ -106,6 +114,8 @@ aggregator:
     - "game engine C++"
     - "engine programmer"
     - "C++ graphics engineer"
+    - "C++ distributed systems engineer"
+    - "distributed systems C++"
   results_per_page: 50
   max_days_old: 30
 
