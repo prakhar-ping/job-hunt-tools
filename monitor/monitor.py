@@ -226,7 +226,8 @@ def run(dry_run: bool = False, deliver: bool = True) -> str:
             return company, None, f"fetch error: {e}"
 
     # Fetch all companies concurrently — the slow part is network I/O.
-    with ThreadPoolExecutor(max_workers=12) as ex:
+    workers = min(32, max(12, len(config["companies"])))
+    with ThreadPoolExecutor(max_workers=workers) as ex:
         results = list(ex.map(_fetch_one, config["companies"].items()))
 
     for company, listings, err in results:

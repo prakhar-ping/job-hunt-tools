@@ -141,6 +141,280 @@ companies:
   "Pure Storage": {type: greenhouse, token: purestorage}
   ClickHouse:    {type: greenhouse, token: clickhouse}
   Couchbase:     {type: greenhouse, token: couchbaseinc}
+  # --- from Pragmatic Engineer hiring list (auto-discovered ATS) ---
+  "10X Genomics": {type: greenhouse, token: 10xgenomics}
+  "2U": {type: greenhouse, token: 2u}
+  ANYbotics: {type: lever, token: anybotics}
+  AXS: {type: greenhouse, token: axs}
+  Adyen: {type: greenhouse, token: adyen}
+  Airbnb: {type: greenhouse, token: airbnb}
+  Airtable: {type: greenhouse, token: airtable}
+  Analytic Partners: {type: lever, token: analyticpartners}
+  Apollo.io: {type: greenhouse, token: apolloio}
+  Appian: {type: greenhouse, token: appian}
+  Aquatic Capital Management: {type: greenhouse, token: aquaticcapitalmanagement}
+  Artefact: {type: greenhouse, token: artefact}
+  Asana: {type: greenhouse, token: asana}
+  AutoScout24: {type: greenhouse, token: autoscout24}
+  Autonomous Solutions Inc (ASI): {type: lever, token: autonomous}
+  Aypa Power, a Blackstone Portfolio Company: {type: greenhouse, token: aypapower}
+  Beyond: {type: greenhouse, token: beyond}
+  Bill.com: {type: greenhouse, token: billcom}
+  Binance: {type: lever, token: binance}
+  Bird Buddy: {type: greenhouse, token: bird}
+  Bitpanda: {type: greenhouse, token: bitpanda}
+  BlaBlaCar: {type: lever, token: blablacar}
+  Bloom & Wild: {type: lever, token: bloom}
+  Bondora: {type: greenhouse, token: bondora}
+  Box Inc: {type: greenhouse, token: boxinc}
+  Braze: {type: greenhouse, token: braze}
+  Breeze Airways: {type: greenhouse, token: breezeairways}
+  Brex: {type: greenhouse, token: brex}
+  Brilliant: {type: lever, token: brilliant}
+  BuzzFeed: {type: greenhouse, token: buzzfeed}
+  CLEAR: {type: greenhouse, token: clear}
+  CRED: {type: lever, token: cred}
+  Cabify: {type: greenhouse, token: cabify}
+  Calendly: {type: greenhouse, token: calendly}
+  Canonical: {type: greenhouse, token: canonical}
+  Capital One Shopping: {type: lever, token: capital}
+  Careem (an Uber company): {type: greenhouse, token: careem}
+  Cargomatic: {type: greenhouse, token: cargomatic}
+  Caribou Wealth: {type: greenhouse, token: caribou}
+  Catawiki: {type: greenhouse, token: catawiki}
+  Celonis: {type: greenhouse, token: celonis}
+  ChargePoint: {type: greenhouse, token: chargepoint}
+  Checkr: {type: greenhouse, token: checkr}
+  Chronograph: {type: greenhouse, token: chronograph}
+  CircleCI: {type: greenhouse, token: circleci}
+  Cision: {type: greenhouse, token: cision}
+  Clear Street: {type: greenhouse, token: clearstreet}
+  Cleo: {type: greenhouse, token: cleo}
+  Clever Inc.: {type: greenhouse, token: clever}
+  Clockwork Systems: {type: greenhouse, token: clockworksystems}
+  Cloudflare: {type: greenhouse, token: cloudflare}
+  Clover Health: {type: greenhouse, token: cloverhealth}
+  Coalition: {type: greenhouse, token: coalition}
+  Coast: {type: greenhouse, token: coast}
+  Collibra: {type: greenhouse, token: collibra}
+  ComplyAdvantage: {type: greenhouse, token: complyadvantage}
+  Concentric by Ginkgo: {type: greenhouse, token: concentric}
+  Contentsquare: {type: lever, token: contentsquare}
+  Coupa Software: {type: lever, token: coupa}
+  Coupang Inc: {type: greenhouse, token: coupang}
+  Creative Fabrica: {type: greenhouse, token: creativefabrica}
+  Cribl: {type: greenhouse, token: cribl}
+  Culture Amp: {type: greenhouse, token: cultureamp}
+  Current Health: {type: greenhouse, token: current}
+  Cutover: {type: greenhouse, token: cutover}
+  DATAPAO: {type: greenhouse, token: datapao}
+  DEPT® Agency: {type: greenhouse, token: dept}
+  Databricks: {type: greenhouse, token: databricks}
+  Datadog: {type: greenhouse, token: datadog}
+  Digicert: {type: greenhouse, token: digicert}
+  DigitalService Bund: {type: greenhouse, token: digitalservice}
+  Diligent Robotics: {type: greenhouse, token: diligentrobotics}
+  Discord: {type: greenhouse, token: discord}
+  Disney+ Hotstar: {type: greenhouse, token: disney}
+  Doctolib: {type: greenhouse, token: doctolib}
+  Dremio: {type: greenhouse, token: dremio}
+  Dropbox: {type: greenhouse, token: dropbox}
+  Ebury: {type: greenhouse, token: ebury}
+  Elsevier: {type: greenhouse, token: elsevier}
+  Emnify: {type: greenhouse, token: emnify}
+  Enable: {type: lever, token: enable}
+  Enthought: {type: greenhouse, token: enthought}
+  Eversports: {type: greenhouse, token: eversports}
+  EvolutionIQ: {type: greenhouse, token: evolutioniq}
+  Exclaimer: {type: greenhouse, token: exclaimer}
+  Extend: {type: greenhouse, token: extend}
+  FARFETCH: {type: greenhouse, token: farfetch}
+  FLYR labs: {type: greenhouse, token: flyr}
+  FREE NOW: {type: greenhouse, token: freenow}
+  Faire: {type: greenhouse, token: faire}
+  FamPay: {type: lever, token: fampay}
+  FanDuel: {type: greenhouse, token: fanduel}
+  FareHarbor: {type: greenhouse, token: fareharbor}
+  Feedzai: {type: greenhouse, token: feedzai}
+  Figma: {type: greenhouse, token: figma}
+  Findigs: {type: lever, token: findigs}
+  FiniteState: {type: greenhouse, token: finitestate}
+  Fivetran: {type: greenhouse, token: fivetran}
+  Fleetio: {type: greenhouse, token: fleetio}
+  Flexport: {type: greenhouse, token: flexport}
+  Flix: {type: greenhouse, token: flix}
+  Flo Health: {type: greenhouse, token: flohealth}
+  Flow Traders: {type: greenhouse, token: flowtraders}
+  FormLabs: {type: greenhouse, token: formlabs}
+  Freenome: {type: greenhouse, token: freenome}
+  Fundrise: {type: lever, token: fundrise}
+  GOAT Group: {type: greenhouse, token: goatgroup}
+  GROPYUS: {type: greenhouse, token: gropyus}
+  Galileo health: {type: greenhouse, token: galileo}
+  Gemini: {type: greenhouse, token: gemini}
+  Genius Sports: {type: greenhouse, token: geniussports}
+  GetYourGuide: {type: greenhouse, token: getyourguide}
+  Getty Images: {type: lever, token: gettyimages}
+  GitLab: {type: greenhouse, token: gitlab}
+  GoCardless: {type: greenhouse, token: gocardless}
+  GoStudent: {type: greenhouse, token: gostudent}
+  Gradle: {type: greenhouse, token: gradle}
+  Gravity Sketch: {type: greenhouse, token: gravity}
+  Groww: {type: greenhouse, token: groww}
+  HG Insights: {type: greenhouse, token: hginsights}
+  HYPR: {type: greenhouse, token: hypr}
+  HackerRank: {type: greenhouse, token: hackerrank}
+  Haven Technologies: {type: greenhouse, token: haven}
+  HealthJoy: {type: greenhouse, token: healthjoy}
+  HelloFresh: {type: greenhouse, token: hellofresh}
+  Hightouch: {type: greenhouse, token: hightouch}
+  Honeycomb: {type: greenhouse, token: honeycomb}
+  HousingAnywhere: {type: greenhouse, token: housinganywhere}
+  Hudl: {type: greenhouse, token: hudl}
+  IMC Trading: {type: greenhouse, token: imc}
+  Inkitt: {type: lever, token: inkitt}
+  Jamf: {type: greenhouse, token: jamf}
+  JetBrains: {type: greenhouse, token: jetbrains}
+  JustWatch: {type: lever, token: justwatch}
+  Justworks: {type: greenhouse, token: justworks}
+  KUNGFU.AI: {type: greenhouse, token: kungfuai}
+  Kaizen Gaming: {type: greenhouse, token: kaizengaming}
+  Kalepa: {type: greenhouse, token: kalepa}
+  Kano: {type: greenhouse, token: kano}
+  Kasada: {type: lever, token: kasada}
+  Khan Academy: {type: greenhouse, token: khanacademy}
+  Kinsta: {type: lever, token: kinsta}
+  Koala Health: {type: lever, token: koalahealth}
+  Ledgy: {type: greenhouse, token: ledgy}
+  London Stock Exchange Group (LSEG): {type: greenhouse, token: london}
+  Lucid Software: {type: greenhouse, token: lucidsoftware}
+  Lunar Energy: {type: greenhouse, token: lunarenergy}
+  MALT: {type: lever, token: malt}
+  MOO: {type: lever, token: moo}
+  Mainspring Energy: {type: lever, token: mainspringenergy}
+  Major League Baseball: {type: greenhouse, token: majorleaguebaseball}
+  Manifest Cyber: {type: greenhouse, token: manifest}
+  Marqeta: {type: greenhouse, token: marqeta}
+  Matillion: {type: lever, token: matillion}
+  Maven Clinic: {type: greenhouse, token: mavenclinic}
+  MediaAlpha: {type: greenhouse, token: mediaalpha}
+  Meesho: {type: lever, token: meesho}
+  Mercari Japan: {type: greenhouse, token: mercari}
+  Merit America: {type: greenhouse, token: meritamerica}
+  Metabase: {type: lever, token: metabase}
+  Metronome: {type: greenhouse, token: metronome}
+  Monzo: {type: greenhouse, token: monzo}
+  MoonPay: {type: lever, token: moonpay}
+  Mozilla: {type: greenhouse, token: mozilla}
+  Muck Rack: {type: greenhouse, token: muckrack}
+  N26: {type: greenhouse, token: n26}
+  National Grid: {type: greenhouse, token: national}
+  NearForm: {type: greenhouse, token: nearform}
+  New Relic: {type: greenhouse, token: newrelic}
+  NexHealth: {type: greenhouse, token: nexhealth}
+  Nextdoor: {type: greenhouse, token: nextdoor}
+  Nortal: {type: greenhouse, token: nortal}
+  Nova Credit: {type: greenhouse, token: novacredit}
+  Nubank: {type: greenhouse, token: nubank}
+  OKX: {type: greenhouse, token: okx}
+  Okta (Auth0): {type: greenhouse, token: okta}
+  Olo: {type: lever, token: olo}
+  On Running: {type: greenhouse, token: onrunning}
+  Onapsis: {type: greenhouse, token: onapsis}
+  Outfit7 Limited (Ekipa2 d.o.o. subsidiary): {type: greenhouse, token: outfit7}
+  Palantir Technologies: {type: lever, token: palantir}
+  PandaDoc: {type: greenhouse, token: pandadoc}
+  Pathward Inc.: {type: greenhouse, token: pathward}
+  Philo: {type: greenhouse, token: philo}
+  Pigment: {type: lever, token: pigment}
+  Ping Identity: {type: greenhouse, token: pingidentity}
+  Postman: {type: greenhouse, token: postman}
+  Prenuvo: {type: greenhouse, token: prenuvo}
+  Prisma: {type: greenhouse, token: prisma}
+  Prismic: {type: lever, token: prismic}
+  Promenade Grouo: {type: lever, token: promenade}
+  Prove Identity: {type: greenhouse, token: prove}
+  Qonto: {type: lever, token: qonto}
+  Qualtrics: {type: greenhouse, token: qualtrics}
+  RELEX Solutions: {type: greenhouse, token: relex}
+  RTINGS.com: {type: greenhouse, token: rtingscom}
+  Raisin GmbH: {type: greenhouse, token: raisin}
+  ResearchGate: {type: lever, token: researchgate}
+  Revenue Analytics: {type: lever, token: revenueanalytics}
+  Rise: {type: lever, token: rise}
+  Safe: {type: lever, token: safe}
+  Samsara: {type: greenhouse, token: samsara}
+  Sauce Labs: {type: greenhouse, token: saucelabs}
+  Scaleway: {type: lever, token: scaleway}
+  Scandit: {type: greenhouse, token: scandit}
+  Scott Logic: {type: lever, token: scottlogic}
+  SeatGeek: {type: greenhouse, token: seatgeek}
+  Secureframe: {type: lever, token: secureframe}
+  Sigma Computing: {type: greenhouse, token: sigmacomputing}
+  Simply Business: {type: greenhouse, token: simply}
+  Simpplr: {type: greenhouse, token: simpplr}
+  Skyscanner: {type: greenhouse, token: skyscanner}
+  Smartcuts (YC W21): {type: lever, token: smartcuts}
+  Smartly.io: {type: greenhouse, token: smartlyio}
+  Smartsheet: {type: greenhouse, token: smartsheet}
+  SonarSource: {type: lever, token: sonarsource}
+  Sotheby's: {type: greenhouse, token: sothebys}
+  SpaceX: {type: greenhouse, token: spacex}
+  SpotHero: {type: greenhouse, token: spothero}
+  Spotify: {type: lever, token: spotify}
+  Springboard: {type: greenhouse, token: springboard}
+  Sprout Social: {type: greenhouse, token: sproutsocial}
+  Squarespace: {type: greenhouse, token: squarespace}
+  Starburst: {type: greenhouse, token: starburst}
+  Stuart: {type: lever, token: stuart}
+  SumUp: {type: greenhouse, token: sumup}
+  System C: {type: greenhouse, token: system}
+  Tatari: {type: greenhouse, token: tatari}
+  TaxBit: {type: greenhouse, token: taxbit}
+  The Athletic: {type: lever, token: theathletic}
+  The New York Times: {type: greenhouse, token: thenewyorktimes}
+  The Trade Desk: {type: greenhouse, token: thetradedesk}
+  Tide: {type: greenhouse, token: tide}
+  Tines: {type: greenhouse, token: tines}
+  Toast: {type: greenhouse, token: toast}
+  TodayTix Group: {type: lever, token: todaytixgroup}
+  TransFICC: {type: greenhouse, token: transficc}
+  TransferGo: {type: greenhouse, token: transfergo}
+  TripActions: {type: greenhouse, token: tripactions}
+  TrueML: {type: lever, token: trueml}
+  Truecaller: {type: greenhouse, token: truecaller}
+  Truveta: {type: greenhouse, token: truveta}
+  Tulip: {type: greenhouse, token: tulip}
+  Twilio Inc: {type: greenhouse, token: twilio}
+  Twitch: {type: greenhouse, token: twitch}
+  Two Chairs: {type: greenhouse, token: twochairs}
+  Ubiquiti: {type: greenhouse, token: ubiquiti}
+  Understood: {type: greenhouse, token: understood}
+  Universal Quantum: {type: greenhouse, token: universal}
+  Upbound: {type: greenhouse, token: upbound}
+  VGW: {type: greenhouse, token: vgw}
+  VTEX: {type: greenhouse, token: vtex}
+  VTS (View the Space): {type: greenhouse, token: vts}
+  Vannevar Labs: {type: greenhouse, token: vannevarlabs}
+  Veepee: {type: lever, token: veepee}
+  Veeva: {type: lever, token: veeva}
+  Vercel: {type: greenhouse, token: vercel}
+  Verkada: {type: greenhouse, token: verkada}
+  Vivcourt Trading: {type: greenhouse, token: vivcourt}
+  Wolt: {type: greenhouse, token: wolt}
+  WorldQuant: {type: greenhouse, token: worldquant}
+  WundermanThompson MAP: {type: greenhouse, token: wundermanthompson}
+  Yes Energy: {type: greenhouse, token: yesenergy}
+  Ziprecruiter: {type: greenhouse, token: ziprecruiter}
+  Zocdoc: {type: greenhouse, token: zocdoc}
+  Zwift: {type: greenhouse, token: zwift}
+  commercetools GmbH: {type: greenhouse, token: commercetools}
+  digital.ai: {type: greenhouse, token: digitalai}
+  envelio: {type: lever, token: envelio}
+  fiskaly: {type: greenhouse, token: fiskaly}
+  isaac: {type: greenhouse, token: isaac}
+  reddit: {type: greenhouse, token: reddit}
+  xDesign: {type: greenhouse, token: xdesign}
   # --- no public ATS API wired yet (listed with careers link each run) ---
   Cohesity:      {type: unsupported, careers: "https://www.cohesity.com/company/careers/"}
   Nutanix:       {type: unsupported, careers: "https://nutanix.eightfold.ai/careers"}
